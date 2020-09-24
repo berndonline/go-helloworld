@@ -11,13 +11,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	log.Print("helloworld: received a request")
 	response := os.Getenv("RESPONSE")
 	if response == "" {
-		response = "Hello World"
+		response = "Hello World!"
 	}
-	fmt.Fprintf(w, response)
+	fmt.Fprintf(w, response + "\n" + os.Getenv("HOSTNAME"))
 }
 
 func main() {
-	log.Print("helloworld is starting...")
+	log.Print("helloworld application is starting...")
 
 	http.HandleFunc("/", handler)
 
