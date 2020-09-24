@@ -9,19 +9,22 @@ import (
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	log.Print("helloworld: received a request")
+	
 	response := os.Getenv("RESPONSE")
+	
 	if response == "" {
 		response = "Hello World!"
 	}
+	
 	fmt.Fprintf(w, response + "\n" + os.Getenv("HOSTNAME"))
 }
 
 func main() {
-	log.Print("helloworld application is starting...")
-
+	log.Print("helloworld: is starting...")
+	
 	http.HandleFunc("/", handler)
-
 	port := os.Getenv("PORT")
+	
 	if port == "" {
 		port = "8080"
 	}
