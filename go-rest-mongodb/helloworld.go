@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	mgo "gopkg.in/mgo.v2"
 	"os"
+	"crypto/subtle"
 )
 
 // Represents database server and credentials
@@ -17,6 +18,26 @@ import (
 // }
 //
 // var config = Config{"localhost", "users_db"}
+
+const (
+	ADMIN_USER     = "admin"
+	ADMIN_PASSWORD = "password"
+)
+
+func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, pass, ok := r.BasicAuth()
+		if !ok || subtle.ConstantTimeCompare([]byte(user),
+			[]byte(ADMIN_USER)) != 1 || subtle.ConstantTimeCompare([]byte(pass),
+			[]byte(ADMIN_PASSWORD)) != 1 {
+			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
+			w.WriteHeader(401)
+			w.Write([]byte("You are Unauthorized to access the application.\n"))
+			return
+		}
+		handler(w, r)
+	}
+}
 
 var server = os.Getenv("SERVER")
 var database = os.Getenv("DATABASE")
@@ -34,7 +55,6 @@ type UsersDAO struct {
 }
 
 var dao = UsersDAO{}
-
 var db *mgo.Database
 
 const (
@@ -174,11 +194,11 @@ func init() {
 // Define HTTP request routes
 func main() {
 	r := mux.NewRouter()
-	r.HandleFunc("/users", AllUsersEndPoint).Methods("GET")
-	r.HandleFunc("/users", CreateUserEndPoint).Methods("POST")
-	r.HandleFunc("/users/{id}", UpdateUserEndPoint).Methods("PUT")
-	r.HandleFunc("/users", DeleteUserEndPoint).Methods("DELETE")
-	r.HandleFunc("/users/{id}", FindUserEndpoint).Methods("GET")
+	r.HandleFunc("/users", BasicAuth(AllUsersEndPoint, "Please enter your username and password")).Methods("GET")
+	r.HandleFunc("/users", BasicAuth(CreateUserEndPoint, "Please enter your username and password")).Methods("POST")
+	r.HandleFunc("/users/{id}", BasicAuth(UpdateUserEndPoint, "Please enter your username and password")).Methods("PUT")
+	r.HandleFunc("/users", BasicAuth(DeleteUserEndPoint, "Please enter your username and password")).Methods("DELETE")
+	r.HandleFunc("/users/{id}", BasicAuth(FindUserEndpoint, "Please enter your username and password")).Methods("GET")
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		log.Fatal(err)
 	}
