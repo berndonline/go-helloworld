@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"gopkg.in/mgo.v2/bson"
 	"github.com/gorilla/mux"
-	. "./dao"
-	. "./models"
+	"github.com/berndonline/go-helloworld/go-rest-mongodb/dao"
+	"github.com/berndonline/go-helloworld/go-rest-mongodb/models"
 )
 
 // Represents database server and credentials
