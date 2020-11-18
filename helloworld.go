@@ -98,7 +98,7 @@ func updateContent(w http.ResponseWriter, r *http.Request) {
 
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		fmt.Fprintf(w, "Enter data with the content name and description only in order to update")
+		fmt.Fprintf(w, "Enter data with the content name and description in order to update an entry")
 	}
 	json.Unmarshal(reqBody, &updatedContent)
 
@@ -128,8 +128,8 @@ func main() {
 	log.Print("helloworld: is starting...")
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", handler)
-	router.HandleFunc("/api/v1/contents", BasicAuth(createContent, "Please enter your username and password")).Methods("POST")
-	router.HandleFunc("/api/v1/contents", BasicAuth(getAllContent, "Please enter your username and password")).Methods("GET")
+	router.HandleFunc("/api/v1/content", BasicAuth(createContent, "Please enter your username and password")).Methods("POST")
+	router.HandleFunc("/api/v1/content", BasicAuth(getAllContent, "Please enter your username and password")).Methods("GET")
 	router.HandleFunc("/api/v1/content/{id}", BasicAuth(getOneContent, "Please enter your username and password")).Methods("GET")
 	router.HandleFunc("/api/v1/content/{id}", BasicAuth(updateContent, "Please enter your username and password")).Methods("PUT")
 	router.HandleFunc("/api/v1/content/{id}", BasicAuth(deleteContent, "Please enter your username and password")).Methods("DELETE")
