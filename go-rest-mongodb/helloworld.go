@@ -7,15 +7,19 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"github.com/gorilla/mux"
 	mgo "gopkg.in/mgo.v2"
+	"os"
 )
 
 // Represents database server and credentials
-type Config struct {
-	Server   string
-	Database string
-}
+// type Config struct {
+// 	Server   string
+// 	Database string
+// }
+//
+// var config = Config{"localhost", "users_db"}
 
-var config = Config{"localhost", "users_db"}
+var server = os.Getenv("SERVER")
+var database = os.Getenv("DATABASE")
 
 type User struct {
 	ID bson.ObjectId `bson:"_id" json:"id"`
@@ -162,8 +166,8 @@ func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 
 // Parse the configuration file 'config.toml', and establish a connection to DB
 func init() {
-	dao.Server = config.Server
-	dao.Database = config.Database
+	dao.Server = server
+	dao.Database = database
 	dao.Connect()
 }
 
@@ -175,7 +179,7 @@ func main() {
 	r.HandleFunc("/users/{id}", UpdateUserEndPoint).Methods("PUT")
 	r.HandleFunc("/users", DeleteUserEndPoint).Methods("DELETE")
 	r.HandleFunc("/users/{id}", FindUserEndpoint).Methods("GET")
-	if err := http.ListenAndServe(":3000", r); err != nil {
+	if err := http.ListenAndServe(":8080", r); err != nil {
 		log.Fatal(err)
 	}
 }

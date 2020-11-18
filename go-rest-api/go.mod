@@ -1,4 +1,4 @@
-module github.com/berndonline/go-helloworld
+module github.com/berndonline/go-helloworld/go-rest-api
 
 go 1.13
 
