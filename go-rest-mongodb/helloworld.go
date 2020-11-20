@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -11,18 +12,13 @@ import (
 	"crypto/subtle"
 )
 
-// Represents database server and credentials
-// type Config struct {
-// 	Server   string
-// 	Database string
-// }
-//
-// var config = Config{"localhost", "users_db"}
-
 const (
 	ADMIN_USER     = "admin"
 	ADMIN_PASSWORD = "password"
 )
+
+var server = os.Getenv("SERVER")
+var database = os.Getenv("DATABASE")
 
 func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -39,14 +35,21 @@ func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 	}
 }
 
-var server = os.Getenv("SERVER")
-var database = os.Getenv("DATABASE")
+func handler(w http.ResponseWriter, r *http.Request) {
+	log.Print("helloworld: received a request")
+
+	response := os.Getenv("RESPONSE")
+
+	if response == "" {
+		response = "Hello, World!"
+	}
+
+	fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
+}
 
 type User struct {
 	ID bson.ObjectId `bson:"_id" json:"id"`
 	Name string `bson:"name" json:"name"`
-	Age  int `bson:"age" json:"age"`
-	Email string `bson:"email" json:"email"`
 }
 
 type UsersDAO struct {
@@ -184,22 +187,38 @@ func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 	w.Write(response)
 }
 
-// Parse the configuration file 'config.toml', and establish a connection to DB
 func init() {
+
+	if server == "" {
+		server = "mongodb"
+	}
+
+	if database == "" {
+		database = "contents_db"
+	}
+
 	dao.Server = server
 	dao.Database = database
 	dao.Connect()
 }
 
-// Define HTTP request routes
 func main() {
-	r := mux.NewRouter()
-	r.HandleFunc("/users", BasicAuth(AllUsersEndPoint, "Please enter your username and password")).Methods("GET")
-	r.HandleFunc("/users", BasicAuth(CreateUserEndPoint, "Please enter your username and password")).Methods("POST")
-	r.HandleFunc("/users/{id}", BasicAuth(UpdateUserEndPoint, "Please enter your username and password")).Methods("PUT")
-	r.HandleFunc("/users", BasicAuth(DeleteUserEndPoint, "Please enter your username and password")).Methods("DELETE")
-	r.HandleFunc("/users/{id}", BasicAuth(FindUserEndpoint, "Please enter your username and password")).Methods("GET")
+	log.Print("helloworld: is starting...")
+	r := mux.NewRouter().StrictSlash(true)
+	r.HandleFunc("/", handler)
+	r.HandleFunc("/api/v1/content", BasicAuth(AllUsersEndPoint, "Please enter your username and password")).Methods("GET")
+	r.HandleFunc("/api/v1/content", BasicAuth(CreateUserEndPoint, "Please enter your username and password")).Methods("POST")
+	r.HandleFunc("/api/v1/content", BasicAuth(DeleteUserEndPoint, "Please enter your username and password")).Methods("DELETE")
+	r.HandleFunc("/api/v1/content/{id}", BasicAuth(UpdateUserEndPoint, "Please enter your username and password")).Methods("PUT")
+	r.HandleFunc("/api/v1/content/{id}", BasicAuth(FindUserEndpoint, "Please enter your username and password")).Methods("GET")
+	port := os.Getenv("PORT")
+
+	if port == "" {
+		port = "8080"
+	}
+
+	log.Printf("helloworld: listening on port %s", port)
 	if err := http.ListenAndServe(":8080", r); err != nil {
-		log.Fatal(err)
+		log.Fatal("error starting http server : ", err)
 	}
 }

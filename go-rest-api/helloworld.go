@@ -14,7 +14,6 @@ import (
 type api struct {
 	ID          string `json:"ID"`
 	Name        string `json:"Name"`
-	Description string `json:"Description"`
 }
 
 type allContent []api
@@ -22,13 +21,11 @@ type allContent []api
 var contents = allContent{
 	{
 		ID:          "1",
-		Name:        "Content name 1",
-		Description: "Description of 1st content",
+		Name:        "Content 1",
 	},
 	{
 		ID:          "2",
-		Name:        "Content name 2",
-		Description: "Description of 2nd content",
+		Name:        "Content 2",
 	},
 }
 
@@ -58,7 +55,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	response := os.Getenv("RESPONSE")
 
 	if response == "" {
-		response = "Hello World!"
+		response = "Hello, World!"
 	}
 
 	fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
@@ -68,14 +65,12 @@ func createContent(w http.ResponseWriter, r *http.Request) {
 	var newContent api
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		fmt.Fprintf(w, "Enter data with the content name and description in order to create a new entry")
+		respondWithError(w, http.StatusInternalServerError, err.Error())
 	}
 
 	json.Unmarshal(reqBody, &newContent)
 	contents = append(contents, newContent)
-	w.WriteHeader(http.StatusCreated)
-
-	json.NewEncoder(w).Encode(newContent)
+	respondWithJson(w, http.StatusOK, newContent)
 }
 
 func getOneContent(w http.ResponseWriter, r *http.Request) {
@@ -83,13 +78,13 @@ func getOneContent(w http.ResponseWriter, r *http.Request) {
 
 	for _, singleContent := range contents {
 		if singleContent.ID == contentID {
-			json.NewEncoder(w).Encode(singleContent)
+			respondWithJson(w, http.StatusOK, singleContent)
 		}
 	}
 }
 
 func getAllContent(w http.ResponseWriter, r *http.Request) {
-	json.NewEncoder(w).Encode(contents)
+	respondWithJson(w, http.StatusOK, contents)
 }
 
 func updateContent(w http.ResponseWriter, r *http.Request) {
@@ -98,16 +93,15 @@ func updateContent(w http.ResponseWriter, r *http.Request) {
 
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		fmt.Fprintf(w, "Enter data with the content name and description in order to update an entry")
+		respondWithError(w, http.StatusInternalServerError, err.Error())
 	}
 	json.Unmarshal(reqBody, &updatedContent)
 
 	for i, singleContent := range contents {
 		if singleContent.ID == contentID {
 			singleContent.Name = updatedContent.Name
-			singleContent.Description = updatedContent.Description
 			contents = append(contents[:i], singleContent)
-			json.NewEncoder(w).Encode(singleContent)
+			respondWithJson(w, http.StatusOK, singleContent)
 		}
 	}
 }
@@ -118,9 +112,20 @@ func deleteContent(w http.ResponseWriter, r *http.Request) {
 	for i, singleContent := range contents {
 		if singleContent.ID == contentID {
 			contents = append(contents[:i], contents[i+1:]...)
-			fmt.Fprintf(w, "The content with ID %v has been deleted successfully", contentID)
+			respondWithJson(w, http.StatusOK, "The content with has been deleted successfully")
 		}
 	}
+}
+
+func respondWithError(w http.ResponseWriter, code int, msg string) {
+	respondWithJson(w, code, map[string]string{"error": msg})
+}
+
+func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
+	response, _ := json.Marshal(payload)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	w.Write(response)
 }
 
 func main() {
@@ -128,8 +133,8 @@ func main() {
 	log.Print("helloworld: is starting...")
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", handler)
-	router.HandleFunc("/api/v1/content", BasicAuth(createContent, "Please enter your username and password")).Methods("POST")
 	router.HandleFunc("/api/v1/content", BasicAuth(getAllContent, "Please enter your username and password")).Methods("GET")
+	router.HandleFunc("/api/v1/content", BasicAuth(createContent, "Please enter your username and password")).Methods("POST")
 	router.HandleFunc("/api/v1/content/{id}", BasicAuth(getOneContent, "Please enter your username and password")).Methods("GET")
 	router.HandleFunc("/api/v1/content/{id}", BasicAuth(updateContent, "Please enter your username and password")).Methods("PUT")
 	router.HandleFunc("/api/v1/content/{id}", BasicAuth(deleteContent, "Please enter your username and password")).Methods("DELETE")
