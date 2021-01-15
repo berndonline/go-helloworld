@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus"
+  "github.com/prometheus/client_golang/prometheus/promauto"
+  "github.com/prometheus/client_golang/prometheus/promhttp"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -28,6 +31,13 @@ var contents = allContent{
 		Name:        "Content 2",
 	},
 }
+
+var (
+  httpDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
+    Name: "myapp_http_duration_seconds",
+    Help: "Duration of HTTP requests.",
+  }, []string{"path"})
+)
 
 const (
 	ADMIN_USER     = "admin"
@@ -128,10 +138,23 @@ func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 	w.Write(response)
 }
 
+func prometheusMiddleware(next http.Handler) http.Handler {
+  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    route := mux.CurrentRoute(r)
+    path, _ := route.GetPathTemplate()
+    timer := prometheus.NewTimer(httpDuration.WithLabelValues(path))
+    next.ServeHTTP(w, r)
+    timer.ObserveDuration()
+  })
+}
+
 func main() {
 
 	log.Print("helloworld: is starting...")
 	router := mux.NewRouter().StrictSlash(true)
+	router.Use(prometheusMiddleware)
+	routerInternal := mux.NewRouter().StrictSlash(true)
+	routerInternal.Path("/metrics").Handler(promhttp.Handler())
 	router.HandleFunc("/", handler)
 	router.HandleFunc("/api/v1/content", BasicAuth(getAllContent, "Please enter your username and password")).Methods("GET")
 	router.HandleFunc("/api/v1/content", BasicAuth(createContent, "Please enter your username and password")).Methods("POST")
@@ -139,10 +162,24 @@ func main() {
 	router.HandleFunc("/api/v1/content/{id}", BasicAuth(updateContent, "Please enter your username and password")).Methods("PUT")
 	router.HandleFunc("/api/v1/content/{id}", BasicAuth(deleteContent, "Please enter your username and password")).Methods("DELETE")
 	port := os.Getenv("PORT")
+  metricsPort := os.Getenv("METRICSPORT")
 
 	if port == "" {
 		port = "8080"
 	}
+
+	if metricsPort == "" {
+		metricsPort = "9100"
+	}
+
+	go func() {
+		log.Printf("metrics: listening on port %s", metricsPort)
+		err := http.ListenAndServe(fmt.Sprintf(":%s", metricsPort), routerInternal)
+		if err != nil {
+			log.Fatal("error starting metrics http server : ", err)
+			return
+		}
+	}()
 
 	log.Printf("helloworld: listening on port %s", port)
 	err := http.ListenAndServe(fmt.Sprintf(":%s", port), router)
