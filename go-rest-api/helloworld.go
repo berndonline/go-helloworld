@@ -21,6 +21,11 @@ type api struct {
 
 type allContent []api
 
+const (
+	ADMIN_USER     = "admin"
+	ADMIN_PASSWORD = "password"
+)
+
 var contents = allContent{
 	{
 		ID:          "1",
@@ -44,12 +49,8 @@ var (
 	httpRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name: "http_request_duration_seconds",
 		Help: "Duration of all HTTP requests",
+		Buckets: prometheus.LinearBuckets(0.01, 0.05, 10),
 	}, []string{"path", "method"})
-)
-
-const (
-	ADMIN_USER     = "admin"
-	ADMIN_PASSWORD = "password"
 )
 
 func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
@@ -134,7 +135,6 @@ func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 	w.Write(response)
 }
 
-
 func prometheusMiddleware(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     route := mux.CurrentRoute(r)
@@ -149,7 +149,6 @@ func prometheusMiddleware(next http.Handler) http.Handler {
 func sanitizeMethod(m string) string {
 	return strings.ToLower(m)
 }
-
 
 func main() {
 	version.Set(1)
