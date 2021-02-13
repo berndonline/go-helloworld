@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
-  "github.com/prometheus/client_golang/prometheus/promauto"
-  "github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+  "strings"
 )
 
 type api struct {
@@ -33,10 +33,22 @@ var contents = allContent{
 }
 
 var (
-  httpDuration = promauto.NewHistogramVec(prometheus.HistogramOpts{
-    Name: "myapp_http_duration_seconds",
-    Help: "Duration of HTTP requests.",
-  }, []string{"path"})
+	appVersion string
+	version = prometheus.NewGauge(prometheus.GaugeOpts{
+		Name: "version",
+		Help: "Version information about this binary",
+		ConstLabels: map[string]string{
+			"version": appVersion,
+		},
+	})
+	httpRequestsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "http_requests_total",
+		Help: "Count of all HTTP requests",
+	}, []string{"method"})
+	httpRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name: "http_request_duration_seconds",
+		Help: "Duration of all HTTP requests",
+	}, []string{"path", "method"})
 )
 
 const (
@@ -57,18 +69,6 @@ func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 		}
 		handler(w, r)
 	}
-}
-
-func handler(w http.ResponseWriter, r *http.Request) {
-	log.Print("helloworld: received a request")
-
-	response := os.Getenv("RESPONSE")
-
-	if response == "" {
-		response = "Hello, World!"
-	}
-
-	fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
 }
 
 func createContent(w http.ResponseWriter, r *http.Request) {
@@ -138,24 +138,46 @@ func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 	w.Write(response)
 }
 
+func sanitizeMethod(m string) string {
+	return strings.ToLower(m)
+}
+
 func prometheusMiddleware(next http.Handler) http.Handler {
+
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     route := mux.CurrentRoute(r)
     path, _ := route.GetPathTemplate()
-    timer := prometheus.NewTimer(httpDuration.WithLabelValues(path))
+		method := sanitizeMethod(r.Method)
+    timer := prometheus.NewTimer(httpRequestDuration.WithLabelValues(path, method))
     next.ServeHTTP(w, r)
     timer.ObserveDuration()
-  })
+	})
 }
 
 func main() {
+	version.Set(1)
+
+	r := prometheus.NewRegistry()
+	r.MustRegister(httpRequestsTotal)
+	r.MustRegister(httpRequestDuration)
+	r.MustRegister(version)
+
+	requestHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Print("helloworld: received a request")
+		response := os.Getenv("RESPONSE")
+		if response == "" {
+			response = "Hello, World!"
+		}
+	  w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
+	})
 
 	log.Print("helloworld: is starting...")
 	router := mux.NewRouter().StrictSlash(true)
 	router.Use(prometheusMiddleware)
 	routerInternal := mux.NewRouter().StrictSlash(true)
-	routerInternal.Path("/metrics").Handler(promhttp.Handler())
-	router.HandleFunc("/", handler)
+	routerInternal.Path("/metrics").Handler(promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
+	router.HandleFunc("/", requestHandler)
 	router.HandleFunc("/api/v1/content", BasicAuth(getAllContent, "Please enter your username and password")).Methods("GET")
 	router.HandleFunc("/api/v1/content", BasicAuth(createContent, "Please enter your username and password")).Methods("POST")
 	router.HandleFunc("/api/v1/content/{id}", BasicAuth(getOneContent, "Please enter your username and password")).Methods("GET")
