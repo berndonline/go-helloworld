@@ -41,10 +41,6 @@ var (
 			"version": appVersion,
 		},
 	})
-	httpRequestsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "http_requests_total",
-		Help: "Count of all HTTP requests",
-	}, []string{"method"})
 	httpRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name: "http_request_duration_seconds",
 		Help: "Duration of all HTTP requests",
@@ -138,12 +134,8 @@ func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 	w.Write(response)
 }
 
-func sanitizeMethod(m string) string {
-	return strings.ToLower(m)
-}
 
 func prometheusMiddleware(next http.Handler) http.Handler {
-
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     route := mux.CurrentRoute(r)
     path, _ := route.GetPathTemplate()
@@ -154,11 +146,15 @@ func prometheusMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func sanitizeMethod(m string) string {
+	return strings.ToLower(m)
+}
+
+
 func main() {
 	version.Set(1)
 
 	r := prometheus.NewRegistry()
-	r.MustRegister(httpRequestsTotal)
 	r.MustRegister(httpRequestDuration)
 	r.MustRegister(version)
 
