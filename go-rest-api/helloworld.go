@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
   "strings"
+	"time"
 )
 
 type api struct {
@@ -51,6 +52,11 @@ var (
 		Help: "Duration of all HTTP requests",
 		Buckets: prometheus.LinearBuckets(0.01, 0.05, 10),
 	}, []string{"path", "method"})
+	httpRequestsResponseTime = prometheus.NewSummary(prometheus.SummaryOpts{
+		Namespace: "http",
+		Name:      "response_time_seconds",
+		Help:      "Request response times",
+  })
 )
 
 func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
@@ -137,12 +143,16 @@ func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 
 func prometheusMiddleware(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
     route := mux.CurrentRoute(r)
     path, _ := route.GetPathTemplate()
 		method := sanitizeMethod(r.Method)
     timer := prometheus.NewTimer(httpRequestDuration.WithLabelValues(path, method))
+
     next.ServeHTTP(w, r)
+		
     timer.ObserveDuration()
+		httpRequestsResponseTime.Observe(float64(time.Since(start).Seconds()))
 	})
 }
 
@@ -155,6 +165,7 @@ func main() {
 
 	r := prometheus.NewRegistry()
 	r.MustRegister(httpRequestDuration)
+	r.MustRegister(httpRequestsResponseTime)
 	r.MustRegister(version)
 
 	requestHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
