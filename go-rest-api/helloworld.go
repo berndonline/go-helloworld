@@ -130,10 +130,10 @@ func updateContent(w http.ResponseWriter, r *http.Request) {
 		if singleContent.ID == contentID {
 			singleContent.Name = updatedContent.Name
 			contents = append(contents[:i], singleContent)
-			log.Print("helloworld-api: updateContent received a request")
 			respondWithJson(w, http.StatusOK, singleContent)
 		}
 	}
+	log.Print("helloworld-api: updateContent received a request")
 }
 
 func deleteContent(w http.ResponseWriter, r *http.Request) {
