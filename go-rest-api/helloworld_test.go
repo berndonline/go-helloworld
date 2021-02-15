@@ -104,7 +104,7 @@ func Test_apitest_getDefaultHandler(t *testing.T) {
   ts := httptest.NewServer(r)
   defer ts.Close()
   apitest.New().
-     Report(apitest.SequenceDiagram("results")).
+     // Report(apitest.SequenceDiagram("results")).
      Handler(r).
      Get("/").
      Expect(t).
@@ -118,7 +118,7 @@ func Test_apitest_getContentIndex(t *testing.T) {
    ts := httptest.NewServer(r)
    defer ts.Close()
    apitest.New().
-      Report(apitest.SequenceDiagram("results")).
+      // Report(apitest.SequenceDiagram("results")).
       Handler(r).
       Get("/api/v1/content").
       BasicAuth("admin", "password").
@@ -134,7 +134,7 @@ func Test_apitest_getOneContent(t *testing.T) {
    defer ts.Close()
    t.Run("Find content 1", func(t *testing.T) {
       apitest.New().
-         Report(apitest.SequenceDiagram("results")).
+         // Report(apitest.SequenceDiagram("results")).
          Handler(r).
          Get("/api/v1/content/1").
          BasicAuth("admin", "password").
@@ -145,7 +145,7 @@ func Test_apitest_getOneContent(t *testing.T) {
    })
    t.Run("Find content 2", func(t *testing.T) {
       apitest.New().
-         Report(apitest.SequenceDiagram("results")).
+         // Report(apitest.SequenceDiagram("results")).
          Handler(r).
          Get("/api/v1/content/2").
          BasicAuth("admin", "password").
@@ -156,7 +156,7 @@ func Test_apitest_getOneContent(t *testing.T) {
    })
    t.Run("Not found", func(t *testing.T) {
       apitest.New().
-         Report(apitest.SequenceDiagram("results")).
+         // Report(apitest.SequenceDiagram("results")).
          Handler(r).
          Get("/api/v1/content/3").
          BasicAuth("admin", "password").
@@ -173,12 +173,30 @@ func Test_apitest_createContent(t *testing.T) {
    defer ts.Close()
    t.Run("Create content 3", func(t *testing.T) {
       apitest.New().
-         Report(apitest.SequenceDiagram("results")).
+         // Report(apitest.SequenceDiagram("results")).
          Handler(r).
          Post("/api/v1/content").
          JSON(`{"ID":"3","Name":"Content 3"}`).
          BasicAuth("admin", "password").
          Expect(t).
+         Status(http.StatusOK).
+         End()
+   })
+}
+
+func Test_apitest_checkNewContent(t *testing.T) {
+   r := mux.NewRouter()
+   r.HandleFunc("/api/v1/content/{id}", BasicAuth(getOneContent, "Please enter your username and password")).Methods("GET")
+   ts := httptest.NewServer(r)
+   defer ts.Close()
+   t.Run("Find content 3", func(t *testing.T) {
+      apitest.New().
+         // Report(apitest.SequenceDiagram("results")).
+         Handler(r).
+         Get("/api/v1/content/3").
+         BasicAuth("admin", "password").
+         Expect(t).
+         Assert(jsonpath.Equal(`$.Name`, "Content 3")).
          Status(http.StatusOK).
          End()
    })
@@ -191,12 +209,30 @@ func Test_apitest_updateContent(t *testing.T) {
    defer ts.Close()
    t.Run("Create content 3", func(t *testing.T) {
       apitest.New().
-         Report(apitest.SequenceDiagram("results")).
+         // Report(apitest.SequenceDiagram("results")).
          Handler(r).
          Put("/api/v1/content/3").
          JSON(`{"ID":"3","Name":"New content 3"}`).
          BasicAuth("admin", "password").
          Expect(t).
+         Status(http.StatusOK).
+         End()
+   })
+}
+
+func Test_apitest_checkUpdateContent(t *testing.T) {
+   r := mux.NewRouter()
+   r.HandleFunc("/api/v1/content/{id}", BasicAuth(getOneContent, "Please enter your username and password")).Methods("GET")
+   ts := httptest.NewServer(r)
+   defer ts.Close()
+   t.Run("Find content 3", func(t *testing.T) {
+      apitest.New().
+         // Report(apitest.SequenceDiagram("results")).
+         Handler(r).
+         Get("/api/v1/content/3").
+         BasicAuth("admin", "password").
+         Expect(t).
+         Assert(jsonpath.Equal(`$.Name`, "New content 3")).
          Status(http.StatusOK).
          End()
    })
@@ -209,7 +245,7 @@ func Test_apitest_deleteContent(t *testing.T) {
    defer ts.Close()
    t.Run("Create content 3", func(t *testing.T) {
       apitest.New().
-         Report(apitest.SequenceDiagram("results")).
+         // Report(apitest.SequenceDiagram("results")).
          Handler(r).
          Delete("/api/v1/content/3").
          BasicAuth("admin", "password").
