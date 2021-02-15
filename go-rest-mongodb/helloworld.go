@@ -17,8 +17,35 @@ const (
 	ADMIN_PASSWORD = "password"
 )
 
+const (
+	COLLECTION = "Contents"
+)
+
+type ContentsDAO struct {
+	Server   string
+	Database string
+}
+
+type Content struct {
+	ID bson.ObjectId `bson:"_id" json:"id"`
+	Name string `bson:"name" json:"name"`
+}
+
+var dao = ContentsDAO{}
+var db *mgo.Database
+
 var server = os.Getenv("SERVER")
 var database = os.Getenv("DATABASE")
+
+func handler(w http.ResponseWriter, r *http.Request) {
+	log.Print("helloworld: defaultHandler received a request")
+	response := os.Getenv("RESPONSE")
+	if response == "" {
+		response = "Hello, World - REST API!"
+	}
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
+}
 
 func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -34,35 +61,6 @@ func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 		handler(w, r)
 	}
 }
-
-func handler(w http.ResponseWriter, r *http.Request) {
-	log.Print("helloworld: received a request")
-
-	response := os.Getenv("RESPONSE")
-
-	if response == "" {
-		response = "Hello, World!"
-	}
-
-	fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
-}
-
-type Content struct {
-	ID bson.ObjectId `bson:"_id" json:"id"`
-	Name string `bson:"name" json:"name"`
-}
-
-type ContentsDAO struct {
-	Server   string
-	Database string
-}
-
-var dao = ContentsDAO{}
-var db *mgo.Database
-
-const (
-	COLLECTION = "Contents"
-)
 
 // Establish a connection to database
 func (m *ContentsDAO) Connect() {
@@ -188,15 +186,12 @@ func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
 }
 
 func init() {
-
 	if server == "" {
 		server = "mongodb"
 	}
-
 	if database == "" {
 		database = "contents_db"
 	}
-
 	dao.Server = server
 	dao.Database = database
 	dao.Connect()
