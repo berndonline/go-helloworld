@@ -15,17 +15,17 @@ import (
 	"time"
 )
 
+const (
+	ADMIN_USER     = "admin"
+	ADMIN_PASSWORD = "password"
+)
+
 type api struct {
 	ID          string `json:"ID"`
 	Name        string `json:"Name"`
 }
 
 type allContent []api
-
-const (
-	ADMIN_USER     = "admin"
-	ADMIN_PASSWORD = "password"
-)
 
 var contents = allContent{
 	{
@@ -59,6 +59,16 @@ var (
   })
 )
 
+func handler(w http.ResponseWriter, r *http.Request) {
+	log.Print("helloworld: defaultHandler received a request")
+	response := os.Getenv("RESPONSE")
+	if response == "" {
+		response = "Hello, World - REST API!"
+	}
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
+}
+
 func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user, pass, ok := r.BasicAuth()
@@ -68,6 +78,7 @@ func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
 			w.WriteHeader(401)
 			w.Write([]byte("You are Unauthorized to access the application.\n"))
+			log.Print("helloworld-api: authentication failed")
 			return
 		}
 		handler(w, r)
@@ -79,35 +90,38 @@ func createContent(w http.ResponseWriter, r *http.Request) {
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error())
+		log.Print("helloworld-api: failed createContent")
 	}
-
 	json.Unmarshal(reqBody, &newContent)
 	contents = append(contents, newContent)
+	log.Print("helloworld-api: createContent received a request")
 	respondWithJson(w, http.StatusOK, newContent)
 }
 
 func getOneContent(w http.ResponseWriter, r *http.Request) {
 	contentID := mux.Vars(r)["id"]
-
 	for _, singleContent := range contents {
     if singleContent.ID == contentID {
+			log.Print("helloworld-api: getOneContent received a request")
 			respondWithJson(w, http.StatusOK, singleContent)
       return
 		}
 	}
+	log.Print("helloworld-api: invalid getOneContent")
 	respondWithError(w, http.StatusNotFound, "Invalid ID")
 }
 
 func getAllContent(w http.ResponseWriter, r *http.Request) {
+	log.Print("helloworld-api: getAllContent received a request")
 	respondWithJson(w, http.StatusOK, contents)
 }
 
 func updateContent(w http.ResponseWriter, r *http.Request) {
 	contentID := mux.Vars(r)["id"]
 	var updatedContent api
-
 	reqBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
+		log.Print("helloworld-api: failed updateContent")
 		respondWithError(w, http.StatusInternalServerError, err.Error())
 	}
 	json.Unmarshal(reqBody, &updatedContent)
@@ -116,6 +130,7 @@ func updateContent(w http.ResponseWriter, r *http.Request) {
 		if singleContent.ID == contentID {
 			singleContent.Name = updatedContent.Name
 			contents = append(contents[:i], singleContent)
+			log.Print("helloworld-api: updateContent received a request")
 			respondWithJson(w, http.StatusOK, singleContent)
 		}
 	}
@@ -127,6 +142,7 @@ func deleteContent(w http.ResponseWriter, r *http.Request) {
 	for i, singleContent := range contents {
 		if singleContent.ID == contentID {
 			contents = append(contents[:i], contents[i+1:]...)
+			log.Print("helloworld-api: deleteContent received a request")
 			respondWithJson(w, http.StatusOK, "The content with has been deleted successfully")
 		}
 	}
@@ -170,22 +186,12 @@ func main() {
 	r.MustRegister(httpRequestsResponseTime)
 	r.MustRegister(version)
 
-	requestHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Print("helloworld: received a request")
-		response := os.Getenv("RESPONSE")
-		if response == "" {
-			response = "Hello, World!"
-		}
-	  w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
-	})
-
 	log.Print("helloworld: is starting...")
 	router := mux.NewRouter().StrictSlash(true)
 	router.Use(prometheusMiddleware)
 	routerInternal := mux.NewRouter().StrictSlash(true)
 	routerInternal.Path("/metrics").Handler(promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
-	router.HandleFunc("/", requestHandler)
+	router.HandleFunc("/", handler)
 	router.HandleFunc("/api/v1/content", BasicAuth(getAllContent, "Please enter your username and password")).Methods("GET")
 	router.HandleFunc("/api/v1/content", BasicAuth(createContent, "Please enter your username and password")).Methods("POST")
 	router.HandleFunc("/api/v1/content/{id}", BasicAuth(getOneContent, "Please enter your username and password")).Methods("GET")
