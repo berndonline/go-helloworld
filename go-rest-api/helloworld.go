@@ -90,10 +90,12 @@ func getOneContent(w http.ResponseWriter, r *http.Request) {
 	contentID := mux.Vars(r)["id"]
 
 	for _, singleContent := range contents {
-		if singleContent.ID == contentID {
+    if singleContent.ID == contentID {
 			respondWithJson(w, http.StatusOK, singleContent)
+      return
 		}
 	}
+	respondWithError(w, http.StatusNotFound, "Invalid ID")
 }
 
 func getAllContent(w http.ResponseWriter, r *http.Request) {
@@ -150,7 +152,7 @@ func prometheusMiddleware(next http.Handler) http.Handler {
     timer := prometheus.NewTimer(httpRequestDuration.WithLabelValues(path, method))
 
     next.ServeHTTP(w, r)
-		
+
     timer.ObserveDuration()
 		httpRequestsResponseTime.Observe(float64(time.Since(start).Seconds()))
 	})
