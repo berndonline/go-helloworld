@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
   "github.com/prometheus/client_golang/prometheus/promhttp"
+	prometheusMiddleware "github.com/berndonline/go-helloworld/go-rest-api"
 	"log"
 	"os"
 	"io"
@@ -54,16 +55,18 @@ func main() {
 	version.Set(0.1)
 
 	r := prometheus.NewRegistry()
-	r.MustRegister(httpRequestDuration)
-  r.MustRegister(httpRequestsTotal)
-	r.MustRegister(httpRequestsResponseTime)
-	r.MustRegister(version)
+	r.MustRegister(prometheusMiddleware.httpRequestDuration)
+  r.MustRegister(prometheusMiddleware.httpRequestsTotal)
+	r.MustRegister(prometheusMiddleware.httpRequestsResponseTime)
+	r.MustRegister(prometheusMiddleware.httpRequestSizeBytes)
+	r.MustRegister(prometheusMiddleware.httpResponseSizeBytes)
+	r.MustRegister(prometheusMiddleware.version)
 
 	log.Print("helloworld: is starting...")
 	routerInternal := mux.NewRouter().StrictSlash(true)
 	routerInternal.Path("/metrics").Handler(promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
 	router := mux.NewRouter().StrictSlash(true)
-	router.Use(prometheusMiddleware)
+	router.Use(prometheusMiddleware.prometheusMiddleware)
 	router.HandleFunc("/", handler)
 	router.HandleFunc("/healthz", handlerHealth)
 	router.HandleFunc("/api/v1/content", BasicAuth(getAllContent, "Please enter your username and password")).Methods("GET")

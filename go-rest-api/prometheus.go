@@ -1,4 +1,4 @@
-package main
+package prometheusMiddleware
 
 import (
   "strings"
@@ -32,6 +32,16 @@ var (
 		Help: "How many HTTP requests processed, partitioned by status code, method and HTTP path.",
 		},
 		[]string{"code", "method", "path"})
+  httpRequestSizeBytes = prometheus.NewSummaryVec(prometheus.SummaryOpts{
+    Name:      "http_request_size_bytes",
+    Help:      "Summary of request bytes received",
+    },
+    []string{"code", "method", "path"})
+  httpResponseSizeBytes = prometheus.NewSummaryVec(prometheus.SummaryOpts{
+    Name:      "http_response_size_bytes",
+    Help:      "Summary of response bytes sent",
+    },
+    []string{"code", "method", "path"})
 )
 
 func prometheusMiddleware(next http.Handler) http.Handler {
@@ -51,6 +61,8 @@ func prometheusMiddleware(next http.Handler) http.Handler {
 
 		httpRequestsResponseTime.Observe(float64(time.Since(start).Seconds()))
 		httpRequestsTotal.WithLabelValues(code,method,path).Inc()
+    httpRequestSizeBytes.WithLabelValues(code,method,path).Observe(float64(estimateRequestSize(r)))
+    httpResponseSizeBytes.WithLabelValues(code,method,path).Observe(float64(delegate.size))
 		timer := prometheus.NewTimer(httpRequestDuration.WithLabelValues(method, code, path))
 		timer.ObserveDuration()
 
@@ -62,6 +74,7 @@ type responseWriterDelegator struct {
 	status      int
 	written     int64
 	wroteHeader bool
+  size        int
 }
 
 func (r *responseWriterDelegator) WriteHeader(code int) {
@@ -76,5 +89,34 @@ func (r *responseWriterDelegator) Write(b []byte) (int, error) {
 	}
 	n, err := r.ResponseWriter.Write(b)
 	r.written += int64(n)
+  r.size += n
 	return n, err
+}
+
+func estimateRequestSize(r *http.Request) int64 {
+	var reqSize int64
+
+	// estimate request line https://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html
+	reqSize += int64(len(r.Method))
+	if r.URL != nil {
+		reqSize += int64(len(r.URL.Path))
+	}
+	reqSize += int64(len(r.Proto))
+	reqSize += 4 //SP SP CRLF
+
+	// TODO: needs furhter work to improve estimation
+	for key, vals := range r.Header {
+		reqSize += int64(len(key))
+
+		for _, v := range vals {
+			reqSize += int64(len(v))
+		}
+		reqSize += 2 // CRLF
+	}
+
+	if r.ContentLength != -1 {
+		reqSize += r.ContentLength
+	}
+
+	return reqSize
 }
