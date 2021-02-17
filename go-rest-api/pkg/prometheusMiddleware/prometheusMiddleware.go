@@ -44,7 +44,7 @@ var (
     []string{"code", "method", "path"})
 )
 
-func prometheusMiddleware(next http.Handler) http.Handler {
+func InstrumentHandler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 

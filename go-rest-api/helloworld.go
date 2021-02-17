@@ -52,17 +52,17 @@ func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 }
 
 func main() {
-	version.Set(0.1)
 
-  metrics := prometheusMiddleware.prometheusMiddleware()
 
+  metrics := prometheusMiddleware.InstrumentHandler()
+  metrics.version.Set(0.1)
 	r := prometheus.NewRegistry()
 	r.MustRegister(metrics.httpRequestDuration)
   r.MustRegister(metrics.httpRequestsTotal)
 	r.MustRegister(metrics.httpRequestsResponseTime)
 	r.MustRegister(metrics.httpRequestSizeBytes)
 	r.MustRegister(metrics.httpResponseSizeBytes)
-	r.MustRegister(promemetricstheus.version)
+	r.MustRegister(metrics.version)
 
 	log.Print("helloworld: is starting...")
 	routerInternal := mux.NewRouter().StrictSlash(true)
