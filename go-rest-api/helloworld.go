@@ -7,7 +7,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
   "github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/berndonline/go-helloworld/go-rest-api/pkg/prometheusMiddleware"
 	"log"
 	"os"
 	"io"
@@ -21,9 +20,11 @@ const (
 func handler(w http.ResponseWriter, r *http.Request) {
 	log.Print("helloworld: defaultHandler received a request")
 	response := os.Getenv("RESPONSE")
+
 	if response == "" {
 		response = "Hello, World - REST API!"
 	}
+	
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
 }
@@ -35,9 +36,9 @@ func handlerHealth(w http.ResponseWriter, r *http.Request) {
   io.WriteString(w, `{"alive": true}`)
 }
 
-func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
+func basicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user, pass, ok := r.BasicAuth()
+		user, pass, ok := r.basicAuth()
 		if !ok || subtle.ConstantTimeCompare([]byte(user),
 			[]byte(ADMIN_USER)) != 1 || subtle.ConstantTimeCompare([]byte(pass),
 			[]byte(ADMIN_PASSWORD)) != 1 {
@@ -52,30 +53,30 @@ func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 }
 
 func main() {
+  version.Set(0.1)
 
-
-  metrics := prometheusMiddleware.InstrumentHandler()
-  metrics.version.Set(0.1)
 	r := prometheus.NewRegistry()
-	r.MustRegister(metrics.httpRequestDuration)
-  r.MustRegister(metrics.httpRequestsTotal)
-	r.MustRegister(metrics.httpRequestsResponseTime)
-	r.MustRegister(metrics.httpRequestSizeBytes)
-	r.MustRegister(metrics.httpResponseSizeBytes)
-	r.MustRegister(metrics.version)
+	r.MustRegister(httpRequestDuration)
+  r.MustRegister(httpRequestsTotal)
+	r.MustRegister(httpRequestsResponseTime)
+	r.MustRegister(httpRequestSizeBytes)
+	r.MustRegister(httpResponseSizeBytes)
+	r.MustRegister(version)
 
 	log.Print("helloworld: is starting...")
+
 	routerInternal := mux.NewRouter().StrictSlash(true)
 	routerInternal.Path("/metrics").Handler(promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
 	router := mux.NewRouter().StrictSlash(true)
-	router.Use(metrics.prometheusMiddleware)
+	router.Use(InstrumentHandler)
 	router.HandleFunc("/", handler)
 	router.HandleFunc("/healthz", handlerHealth)
-	router.HandleFunc("/api/v1/content", BasicAuth(getAllContent, "Please enter your username and password")).Methods("GET")
-	router.HandleFunc("/api/v1/content", BasicAuth(createContent, "Please enter your username and password")).Methods("POST")
-	router.HandleFunc("/api/v1/content/{id}", BasicAuth(getOneContent, "Please enter your username and password")).Methods("GET")
-	router.HandleFunc("/api/v1/content/{id}", BasicAuth(updateContent, "Please enter your username and password")).Methods("PUT")
-	router.HandleFunc("/api/v1/content/{id}", BasicAuth(deleteContent, "Please enter your username and password")).Methods("DELETE")
+	router.HandleFunc("/api/v1/content", basicAuth(getAllContent, "Please enter your username and password")).Methods("GET")
+	router.HandleFunc("/api/v1/content", basicAuth(createContent, "Please enter your username and password")).Methods("POST")
+	router.HandleFunc("/api/v1/content/{id}", basicAuth(getOneContent, "Please enter your username and password")).Methods("GET")
+	router.HandleFunc("/api/v1/content/{id}", basicAuth(updateContent, "Please enter your username and password")).Methods("PUT")
+	router.HandleFunc("/api/v1/content/{id}", basicAuth(deleteContent, "Please enter your username and password")).Methods("DELETE")
+
 	port := os.Getenv("PORT")
   metricsPort := os.Getenv("METRICSPORT")
 

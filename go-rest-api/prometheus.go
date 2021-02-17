@@ -1,4 +1,4 @@
-package prometheusMiddleware
+package main
 
 import (
   "strings"
