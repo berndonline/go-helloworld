@@ -4,7 +4,6 @@ import (
    "net/http"
    "net/http/httptest"
    "testing"
-
    "github.com/gorilla/mux"
    "github.com/steinfletcher/apitest"
    jsonpath "github.com/steinfletcher/apitest-jsonpath"

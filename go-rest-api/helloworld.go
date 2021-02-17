@@ -2,61 +2,19 @@ package main
 
 import (
 	"crypto/subtle"
-	"encoding/json"
+	"net/http"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"io/ioutil"
+  "github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
-	"net/http"
 	"os"
-  "strings"
-	"time"
+	"io"
 )
 
 const (
 	ADMIN_USER     = "admin"
 	ADMIN_PASSWORD = "password"
-)
-
-type api struct {
-	ID          string `json:"ID"`
-	Name        string `json:"Name"`
-}
-
-type allContent []api
-
-var contents = allContent{
-	{
-		ID:          "1",
-		Name:        "Content 1",
-	},
-	{
-		ID:          "2",
-		Name:        "Content 2",
-	},
-}
-
-var (
-	appVersion string
-	version = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "version",
-		Help: "Version information about this binary",
-		ConstLabels: map[string]string{
-			"version": appVersion,
-		},
-	})
-	httpRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name: "http_request_duration_seconds",
-		Help: "Duration of all HTTP requests",
-		Buckets: prometheus.LinearBuckets(0.01, 0.05, 10),
-	}, []string{"path", "method"})
-	httpRequestsResponseTime = prometheus.NewSummary(prometheus.SummaryOpts{
-		Namespace: "http",
-		Name:      "response_time_seconds",
-		Help:      "Request response times",
-  })
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -67,6 +25,13 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
+}
+
+func handlerHealth(w http.ResponseWriter, r *http.Request) {
+  w.Header().Set("Content-Type", "application/json")
+  w.WriteHeader(http.StatusOK)
+
+  io.WriteString(w, `{"alive": true}`)
 }
 
 func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
@@ -85,113 +50,22 @@ func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 	}
 }
 
-func createContent(w http.ResponseWriter, r *http.Request) {
-	var newContent api
-	reqBody, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err.Error())
-		log.Print("helloworld-api: failed createContent")
-	}
-	json.Unmarshal(reqBody, &newContent)
-	contents = append(contents, newContent)
-	log.Print("helloworld-api: createContent received a request")
-	respondWithJson(w, http.StatusOK, newContent)
-}
-
-func getOneContent(w http.ResponseWriter, r *http.Request) {
-	contentID := mux.Vars(r)["id"]
-	for _, singleContent := range contents {
-    if singleContent.ID == contentID {
-			log.Print("helloworld-api: getOneContent received a request")
-			respondWithJson(w, http.StatusOK, singleContent)
-      return
-		}
-	}
-	log.Print("helloworld-api: invalid getOneContent")
-	respondWithError(w, http.StatusNotFound, "Invalid ID")
-}
-
-func getAllContent(w http.ResponseWriter, r *http.Request) {
-	log.Print("helloworld-api: getAllContent received a request")
-	respondWithJson(w, http.StatusOK, contents)
-}
-
-func updateContent(w http.ResponseWriter, r *http.Request) {
-	contentID := mux.Vars(r)["id"]
-	var updatedContent api
-	reqBody, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		log.Print("helloworld-api: failed updateContent")
-		respondWithError(w, http.StatusInternalServerError, err.Error())
-	}
-	json.Unmarshal(reqBody, &updatedContent)
-
-	for i, singleContent := range contents {
-		if singleContent.ID == contentID {
-			singleContent.Name = updatedContent.Name
-			contents = append(contents[:i], singleContent)
-			respondWithJson(w, http.StatusOK, singleContent)
-		}
-	}
-	log.Print("helloworld-api: updateContent received a request")
-}
-
-func deleteContent(w http.ResponseWriter, r *http.Request) {
-	contentID := mux.Vars(r)["id"]
-
-	for i, singleContent := range contents {
-		if singleContent.ID == contentID {
-			contents = append(contents[:i], contents[i+1:]...)
-			log.Print("helloworld-api: deleteContent received a request")
-			respondWithJson(w, http.StatusOK, "The content with has been deleted successfully")
-		}
-	}
-}
-
-func respondWithError(w http.ResponseWriter, code int, msg string) {
-	respondWithJson(w, code, map[string]string{"error": msg})
-}
-
-func respondWithJson(w http.ResponseWriter, code int, payload interface{}) {
-	response, _ := json.Marshal(payload)
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	w.Write(response)
-}
-
-func prometheusMiddleware(next http.Handler) http.Handler {
-  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
-    route := mux.CurrentRoute(r)
-    path, _ := route.GetPathTemplate()
-		method := sanitizeMethod(r.Method)
-    timer := prometheus.NewTimer(httpRequestDuration.WithLabelValues(path, method))
-
-    next.ServeHTTP(w, r)
-
-    timer.ObserveDuration()
-		httpRequestsResponseTime.Observe(float64(time.Since(start).Seconds()))
-	})
-}
-
-func sanitizeMethod(m string) string {
-	return strings.ToLower(m)
-}
-
 func main() {
-	version.Set(1)
+	version.Set(0.1)
 
 	r := prometheus.NewRegistry()
 	r.MustRegister(httpRequestDuration)
+  r.MustRegister(httpRequestsTotal)
 	r.MustRegister(httpRequestsResponseTime)
 	r.MustRegister(version)
 
 	log.Print("helloworld: is starting...")
-	router := mux.NewRouter().StrictSlash(true)
-	router.Use(prometheusMiddleware)
 	routerInternal := mux.NewRouter().StrictSlash(true)
 	routerInternal.Path("/metrics").Handler(promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
+	router := mux.NewRouter().StrictSlash(true)
+	router.Use(prometheusMiddleware)
 	router.HandleFunc("/", handler)
+	router.HandleFunc("/healthz", handlerHealth)
 	router.HandleFunc("/api/v1/content", BasicAuth(getAllContent, "Please enter your username and password")).Methods("GET")
 	router.HandleFunc("/api/v1/content", BasicAuth(createContent, "Please enter your username and password")).Methods("POST")
 	router.HandleFunc("/api/v1/content/{id}", BasicAuth(getOneContent, "Please enter your username and password")).Methods("GET")
@@ -203,7 +77,6 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-
 	if metricsPort == "" {
 		metricsPort = "9100"
 	}
