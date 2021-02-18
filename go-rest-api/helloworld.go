@@ -24,21 +24,22 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	if response == "" {
 		response = "Hello, World - REST API!"
 	}
-	
+
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
+	// fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
+	fmt.Fprintf(w, response)
 }
 
-func handlerHealth(w http.ResponseWriter, r *http.Request) {
+func healthHandler(w http.ResponseWriter, r *http.Request) {
   w.Header().Set("Content-Type", "application/json")
   w.WriteHeader(http.StatusOK)
 
   io.WriteString(w, `{"alive": true}`)
 }
 
-func basicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
+func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		user, pass, ok := r.basicAuth()
+		user, pass, ok := r.BasicAuth()
 		if !ok || subtle.ConstantTimeCompare([]byte(user),
 			[]byte(ADMIN_USER)) != 1 || subtle.ConstantTimeCompare([]byte(pass),
 			[]byte(ADMIN_PASSWORD)) != 1 {
@@ -70,12 +71,12 @@ func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.Use(InstrumentHandler)
 	router.HandleFunc("/", handler)
-	router.HandleFunc("/healthz", handlerHealth)
-	router.HandleFunc("/api/v1/content", basicAuth(getAllContent, "Please enter your username and password")).Methods("GET")
-	router.HandleFunc("/api/v1/content", basicAuth(createContent, "Please enter your username and password")).Methods("POST")
-	router.HandleFunc("/api/v1/content/{id}", basicAuth(getOneContent, "Please enter your username and password")).Methods("GET")
-	router.HandleFunc("/api/v1/content/{id}", basicAuth(updateContent, "Please enter your username and password")).Methods("PUT")
-	router.HandleFunc("/api/v1/content/{id}", basicAuth(deleteContent, "Please enter your username and password")).Methods("DELETE")
+	router.HandleFunc("/healthz", healthHandler)
+	router.HandleFunc("/api/v1/content", BasicAuth(getAllContent, "Please enter your username and password")).Methods("GET")
+	router.HandleFunc("/api/v1/content", BasicAuth(createContent, "Please enter your username and password")).Methods("POST")
+	router.HandleFunc("/api/v1/content/{id}", BasicAuth(getOneContent, "Please enter your username and password")).Methods("GET")
+	router.HandleFunc("/api/v1/content/{id}", BasicAuth(updateContent, "Please enter your username and password")).Methods("PUT")
+	router.HandleFunc("/api/v1/content/{id}", BasicAuth(deleteContent, "Please enter your username and password")).Methods("DELETE")
 
 	port := os.Getenv("PORT")
   metricsPort := os.Getenv("METRICSPORT")

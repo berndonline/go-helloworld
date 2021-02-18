@@ -62,7 +62,7 @@ func InstrumentHandler(next http.Handler) http.Handler {
 		httpRequestsResponseTime.Observe(float64(time.Since(start).Seconds()))
 		httpRequestsTotal.WithLabelValues(code,method,path).Inc()
     httpRequestSizeBytes.WithLabelValues(code,method,path).Observe(float64(estimateRequestSize(r)))
-    httpResponseSizeBytes.WithLabelValues(code,method,path).Observe(float64(delegate.size))
+    httpResponseSizeBytes.WithLabelValues(code,method,path).Observe(float64(delegate.written))
 		timer := prometheus.NewTimer(httpRequestDuration.WithLabelValues(method, code, path))
 		timer.ObserveDuration()
 
@@ -74,7 +74,6 @@ type responseWriterDelegator struct {
 	status      int
 	written     int64
 	wroteHeader bool
-  size        int
 }
 
 func (r *responseWriterDelegator) WriteHeader(code int) {
@@ -89,7 +88,6 @@ func (r *responseWriterDelegator) Write(b []byte) (int, error) {
 	}
 	n, err := r.ResponseWriter.Write(b)
 	r.written += int64(n)
-  r.size += n
 	return n, err
 }
 
