@@ -88,7 +88,7 @@ func main() {
 	}
 
 	go func() {
-		log.Printf("metrics: listening on port %s", metricsPort)
+		log.Printf("helloworld: metrics listening on port %s", metricsPort)
 		err := http.ListenAndServe(fmt.Sprintf(":%s", metricsPort), routerInternal)
 		if err != nil {
 			log.Fatal("error starting metrics http server : ", err)
