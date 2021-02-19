@@ -26,8 +26,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusOK)
-	// fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
-	fmt.Fprintf(w, response)
+	fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {

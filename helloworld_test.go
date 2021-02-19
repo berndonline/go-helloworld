@@ -5,6 +5,7 @@ import (
    "net/http/httptest"
    "testing"
    "github.com/gorilla/mux"
+   "os"
    // Below needed for APITEST library - https://apitest.dev
    // "github.com/steinfletcher/apitest"
 )
@@ -26,7 +27,7 @@ func Test_Standard_Handler(t *testing.T) {
           status, http.StatusOK)
   }
 
-  expected := `Hello, World - REST API!`
+  expected := `Hello, World - REST API!`+"\n"+os.Getenv("HOSTNAME")
   if rr.Body.String() != expected {
       t.Errorf("handler returned unexpected body: got %v want %v",
           rr.Body.String(), expected)
