@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
-  "github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"os"
 	"io"
@@ -30,10 +30,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
-  w.Header().Set("Content-Type", "application/json")
-  w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 
-  io.WriteString(w, `{"alive": true}`)
+	io.WriteString(w, `{"alive": true}`)
 }
 
 func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
@@ -57,7 +57,7 @@ func main() {
 
 	r := prometheus.NewRegistry()
 	r.MustRegister(httpRequestDuration)
-  r.MustRegister(httpRequestsTotal)
+	r.MustRegister(httpRequestsTotal)
 	r.MustRegister(httpRequestsResponseTime)
 	r.MustRegister(httpRequestSizeBytes)
 	r.MustRegister(httpResponseSizeBytes)
@@ -78,7 +78,7 @@ func main() {
 	router.HandleFunc("/api/v1/content/{id}", BasicAuth(deleteContent, "Please enter your username and password")).Methods("DELETE")
 
 	port := os.Getenv("PORT")
-  metricsPort := os.Getenv("METRICSPORT")
+	metricsPort := os.Getenv("METRICSPORT")
 
 	if port == "" {
 		port = "8080"
