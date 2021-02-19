@@ -34,10 +34,10 @@ func getIndexContent(w http.ResponseWriter, r *http.Request) {
 func getSingleContent(w http.ResponseWriter, r *http.Request) {
 	contentID := mux.Vars(r)["id"]
 	for _, singleContent := range contents {
-    if singleContent.ID == contentID {
+		if singleContent.ID == contentID {
 			log.Print("helloworld-api: getSingleContent received a request")
 			respondWithJson(w, http.StatusOK, singleContent)
-      return
+		  return
 		}
 	}
 	log.Print("helloworld-api: invalid getSingleContent")
