@@ -26,21 +26,21 @@ var contents = allContent{
 	},
 }
 
-func getAllContent(w http.ResponseWriter, r *http.Request) {
-	log.Print("helloworld-api: getAllContent received a request")
+func getIndexContent(w http.ResponseWriter, r *http.Request) {
+	log.Print("helloworld-api: getIndexContent received a request")
 	respondWithJson(w, http.StatusOK, contents)
 }
 
-func getOneContent(w http.ResponseWriter, r *http.Request) {
+func getSingleContent(w http.ResponseWriter, r *http.Request) {
 	contentID := mux.Vars(r)["id"]
 	for _, singleContent := range contents {
     if singleContent.ID == contentID {
-			log.Print("helloworld-api: getOneContent received a request")
+			log.Print("helloworld-api: getSingleContent received a request")
 			respondWithJson(w, http.StatusOK, singleContent)
       return
 		}
 	}
-	log.Print("helloworld-api: invalid getOneContent")
+	log.Print("helloworld-api: invalid getSingleContent")
 	respondWithError(w, http.StatusNotFound, "Invalid ID")
 }
 

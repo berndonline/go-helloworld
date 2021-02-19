@@ -5,7 +5,8 @@ import (
    "net/http/httptest"
    "testing"
    "github.com/gorilla/mux"
-   "github.com/steinfletcher/apitest"
+   // Below needed for APITEST library - https://apitest.dev
+   // "github.com/steinfletcher/apitest"
 )
 
 // Test with standard go library
@@ -57,16 +58,16 @@ func Test_Standard_HealthHandler(t *testing.T) {
 
 // Test using APITEST library - https://apitest.dev
 
-func Test_apitest_Handler(t *testing.T) {
-  r := mux.NewRouter()
-  r.HandleFunc("/", handler)
-  ts := httptest.NewServer(r)
-  defer ts.Close()
-  apitest.New().
-     // Report(apitest.SequenceDiagram("results")).
-     Handler(r).
-     Get("/").
-     Expect(t).
-     Status(http.StatusOK).
-     End()
-}
+// func Test_apitest_Handler(t *testing.T) {
+//   r := mux.NewRouter()
+//   r.HandleFunc("/", handler)
+//   ts := httptest.NewServer(r)
+//   defer ts.Close()
+//   apitest.New().
+//      // Report(apitest.SequenceDiagram("results")).
+//      Handler(r).
+//      Get("/").
+//      Expect(t).
+//      Status(http.StatusOK).
+//      End()
+// }

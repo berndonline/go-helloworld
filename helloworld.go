@@ -72,9 +72,9 @@ func main() {
 	router.Use(InstrumentHandler)
 	router.HandleFunc("/", handler)
 	router.HandleFunc("/healthz", healthHandler)
-	router.HandleFunc("/api/v1/content", BasicAuth(getAllContent, "Please enter your username and password")).Methods("GET")
+	router.HandleFunc("/api/v1/content", BasicAuth(getIndexContent, "Please enter your username and password")).Methods("GET")
 	router.HandleFunc("/api/v1/content", BasicAuth(createContent, "Please enter your username and password")).Methods("POST")
-	router.HandleFunc("/api/v1/content/{id}", BasicAuth(getOneContent, "Please enter your username and password")).Methods("GET")
+	router.HandleFunc("/api/v1/content/{id}", BasicAuth(getSingleContent, "Please enter your username and password")).Methods("GET")
 	router.HandleFunc("/api/v1/content/{id}", BasicAuth(updateContent, "Please enter your username and password")).Methods("PUT")
 	router.HandleFunc("/api/v1/content/{id}", BasicAuth(deleteContent, "Please enter your username and password")).Methods("DELETE")
 
