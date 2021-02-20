@@ -71,12 +71,20 @@ func main() {
 	router.Use(InstrumentHandler)
 	router.HandleFunc("/", handler)
 	router.HandleFunc("/healthz", healthHandler)
-	router.HandleFunc("/api/v1/content", BasicAuth(getIndexContent, "Please enter your username and password")).Methods("GET")
-	router.HandleFunc("/api/v1/content", BasicAuth(createContent, "Please enter your username and password")).Methods("POST")
-	router.HandleFunc("/api/v1/content/{id}", BasicAuth(getSingleContent, "Please enter your username and password")).Methods("GET")
-	router.HandleFunc("/api/v1/content/{id}", BasicAuth(updateContent, "Please enter your username and password")).Methods("PUT")
-	router.HandleFunc("/api/v1/content/{id}", BasicAuth(deleteContent, "Please enter your username and password")).Methods("DELETE")
 
+	var api = router.PathPrefix("/api").Subrouter()
+	api.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+	})
+	var v1 = api.PathPrefix("/v1").Subrouter()
+	v1.HandleFunc("/content", BasicAuth(getIndexContent, "Please enter your username and password")).Methods("GET")
+	v1.HandleFunc("/content", BasicAuth(createContent, "Please enter your username and password")).Methods("POST")
+	v1.HandleFunc("/content/{id}", BasicAuth(getSingleContent, "Please enter your username and password")).Methods("GET")
+	v1.HandleFunc("/content/{id}", BasicAuth(updateContent, "Please enter your username and password")).Methods("PUT")
+	v1.HandleFunc("/content/{id}", BasicAuth(deleteContent, "Please enter your username and password")).Methods("DELETE")
+	v1.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	})
 	port := os.Getenv("PORT")
 	metricsPort := os.Getenv("METRICSPORT")
 
