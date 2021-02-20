@@ -85,6 +85,7 @@ func main() {
 	v1.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
+	
 	port := os.Getenv("PORT")
 	metricsPort := os.Getenv("METRICSPORT")
 
