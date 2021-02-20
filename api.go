@@ -2,27 +2,27 @@ package main
 
 import (
 	"encoding/json"
-	"net/http"
 	"github.com/gorilla/mux"
 	"io/ioutil"
 	"log"
+	"net/http"
 )
 
 type api struct {
-	ID          string `json:"ID"`
-	Name        string `json:"Name"`
+	ID   string `json:"ID"`
+	Name string `json:"Name"`
 }
 
 type allContent []api
 
 var contents = allContent{
 	{
-		ID:          "1",
-		Name:        "Content 1",
+		ID:   "1",
+		Name: "Content 1",
 	},
 	{
-		ID:          "2",
-		Name:        "Content 2",
+		ID:   "2",
+		Name: "Content 2",
 	},
 }
 
@@ -37,7 +37,7 @@ func getSingleContent(w http.ResponseWriter, r *http.Request) {
 		if singleContent.ID == contentID {
 			log.Print("helloworld-api: getSingleContent received a request")
 			respondWithJson(w, http.StatusOK, singleContent)
-		  return
+			return
 		}
 	}
 	log.Print("helloworld-api: invalid getSingleContent")

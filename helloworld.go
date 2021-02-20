@@ -2,14 +2,14 @@ package main
 
 import (
 	"crypto/subtle"
-	"net/http"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"log"
-	"os"
 	"io"
+	"log"
+	"net/http"
+	"os"
 )
 
 var (
@@ -67,7 +67,7 @@ func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 }
 
 func main() {
-  version.Set(0.1)
+	version.Set(0.1)
 
 	r := prometheus.NewRegistry()
 	r.MustRegister(httpRequestDuration)
@@ -88,7 +88,7 @@ func main() {
 
 	var api = router.PathPrefix("/api").Subrouter()
 	api.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusNotFound)
 	})
 	var v1 = api.PathPrefix("/v1").Subrouter()
 	v1.HandleFunc("/content", BasicAuth(getIndexContent, "Please enter your username and password")).Methods("GET")

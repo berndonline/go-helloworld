@@ -1,60 +1,60 @@
 package main
 
 import (
-   "net/http"
-   "net/http/httptest"
-   "testing"
-   "github.com/gorilla/mux"
-   "os"
-   // Below needed for APITEST library - https://apitest.dev
-   // "github.com/steinfletcher/apitest"
+	"github.com/gorilla/mux"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"testing"
+	// Below needed for APITEST library - https://apitest.dev
+	// "github.com/steinfletcher/apitest"
 )
 
 // Test with standard go library
 
 func Test_Standard_Handler(t *testing.T) {
-  r := mux.NewRouter()
-  r.HandleFunc("/", handler)
-  req, err := http.NewRequest("GET", "/", nil)
-  if err != nil {
-      t.Fatal(err)
-  }
-  rr := httptest.NewRecorder()
-  r.ServeHTTP(rr, req)
+	r := mux.NewRouter()
+	r.HandleFunc("/", handler)
+	req, err := http.NewRequest("GET", "/", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
 
-  if status := rr.Code; status != http.StatusOK {
-      t.Errorf("handler returned wrong status code: got %v want %v",
-          status, http.StatusOK)
-  }
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusOK)
+	}
 
-  expected := `Hello, World - REST API!`+"\n"+os.Getenv("HOSTNAME")
-  if rr.Body.String() != expected {
-      t.Errorf("handler returned unexpected body: got %v want %v",
-          rr.Body.String(), expected)
-  }
+	expected := `Hello, World - REST API!` + "\n" + os.Getenv("HOSTNAME")
+	if rr.Body.String() != expected {
+		t.Errorf("handler returned unexpected body: got %v want %v",
+			rr.Body.String(), expected)
+	}
 }
 
 func Test_Standard_HealthHandler(t *testing.T) {
-    r := mux.NewRouter()
-    r.HandleFunc("/healthz", healthHandler)
-    req, err := http.NewRequest("GET", "/healthz", nil)
-    if err != nil {
-        t.Fatal(err)
-    }
+	r := mux.NewRouter()
+	r.HandleFunc("/healthz", healthHandler)
+	req, err := http.NewRequest("GET", "/healthz", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 
-    rr := httptest.NewRecorder()
-    r.ServeHTTP(rr, req)
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
 
-    if status := rr.Code; status != http.StatusOK {
-        t.Errorf("handler returned wrong status code: got %v want %v",
-            status, http.StatusOK)
-    }
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusOK)
+	}
 
-    expected := `{"alive": true}`
-    if rr.Body.String() != expected {
-        t.Errorf("handler returned unexpected body: got %v want %v",
-            rr.Body.String(), expected)
-    }
+	expected := `{"alive": true}`
+	if rr.Body.String() != expected {
+		t.Errorf("handler returned unexpected body: got %v want %v",
+			rr.Body.String(), expected)
+	}
 }
 
 // Test using APITEST library - https://apitest.dev

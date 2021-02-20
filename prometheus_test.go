@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
-  "github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -42,17 +42,17 @@ func Test_Standard_InstrumentHandler(t *testing.T) {
 	body := rr.Body.String()
 
 	t.Run("Check http_request_duration_seconds", func(t *testing.T) {
-	  if !strings.Contains(body, "http_request_duration_seconds") {
-	  	t.Errorf("body does not contain request total entry '%s'", "http_request_duration_seconds")
-	  }
+		if !strings.Contains(body, "http_request_duration_seconds") {
+			t.Errorf("body does not contain request total entry '%s'", "http_request_duration_seconds")
+		}
 	})
 	t.Run("Check http_requests_total", func(t *testing.T) {
-	  if !strings.Contains(body, "http_requests_total") {
-	  	t.Errorf("body does not contain request duration entry '%s'", "http_requests_total")
-	  }
+		if !strings.Contains(body, "http_requests_total") {
+			t.Errorf("body does not contain request duration entry '%s'", "http_requests_total")
+		}
 	})
 	t.Run("Check http_request_size_bytes", func(t *testing.T) {
-	  if !strings.Contains(body, "http_request_size_bytes") {
+		if !strings.Contains(body, "http_request_size_bytes") {
 			t.Errorf("body does not contain request total entry '%s'", "http_request_size_bytes")
 		}
 	})
@@ -62,8 +62,8 @@ func Test_Standard_InstrumentHandler(t *testing.T) {
 		}
 	})
 	t.Run("Check version", func(t *testing.T) {
-	  if !strings.Contains(body, "version") {
-	    t.Errorf("body does not contain request duration entry '%s'", "versions")
-	  }
+		if !strings.Contains(body, "version") {
+			t.Errorf("body does not contain request duration entry '%s'", "versions")
+		}
 	})
 }

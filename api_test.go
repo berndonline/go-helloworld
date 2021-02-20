@@ -1,210 +1,210 @@
 package main
 
 import (
-   "bytes"
-   "net/http"
-   "net/http/httptest"
-   "testing"
-   "github.com/gorilla/mux"
-   // Below needed for APITEST library - https://apitest.dev
-   // "github.com/steinfletcher/apitest"
-   // jsonpath "github.com/steinfletcher/apitest-jsonpath"
+	"bytes"
+	"github.com/gorilla/mux"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+	// Below needed for APITEST library - https://apitest.dev
+	// "github.com/steinfletcher/apitest"
+	// jsonpath "github.com/steinfletcher/apitest-jsonpath"
 )
 
 // Test with standard go library
 
 func Test_Standard_getContentIndex(t *testing.T) {
-  r := mux.NewRouter()
-  r.HandleFunc("/api/v1/content", BasicAuth(getIndexContent, "Please enter your username and password")).Methods("GET")
-  req, err := http.NewRequest("GET", "/api/v1/content", nil)
-  if err != nil {
-      t.Fatal(err)
-  }
-  req.SetBasicAuth(username, password)
+	r := mux.NewRouter()
+	r.HandleFunc("/api/v1/content", BasicAuth(getIndexContent, "Please enter your username and password")).Methods("GET")
+	req, err := http.NewRequest("GET", "/api/v1/content", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.SetBasicAuth(username, password)
 
-  rr := httptest.NewRecorder()
-  r.ServeHTTP(rr, req)
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
 
-  if status := rr.Code; status != http.StatusOK {
-      t.Errorf("handler returned wrong status code: got %v want %v",
-          status, http.StatusOK)
-  }
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusOK)
+	}
 
-  expected := `[{"ID":"1","Name":"Content 1"},{"ID":"2","Name":"Content 2"}]`
-  if rr.Body.String() != expected {
-      t.Errorf("handler returned unexpected body: got %v want %v",
-          rr.Body.String(), expected)
-  }
+	expected := `[{"ID":"1","Name":"Content 1"},{"ID":"2","Name":"Content 2"}]`
+	if rr.Body.String() != expected {
+		t.Errorf("handler returned unexpected body: got %v want %v",
+			rr.Body.String(), expected)
+	}
 }
 
 func Test_Standard_getSingleContent(t *testing.T) {
-  r := mux.NewRouter()
-  r.HandleFunc("/api/v1/content/{id}", BasicAuth(getSingleContent, "Please enter your username and password")).Methods("GET")
+	r := mux.NewRouter()
+	r.HandleFunc("/api/v1/content/{id}", BasicAuth(getSingleContent, "Please enter your username and password")).Methods("GET")
 
-  t.Run("Find content 1", func(t *testing.T) {
-    req, err := http.NewRequest("GET", "/api/v1/content/1", nil)
-    if err != nil {
-        t.Fatal(err)
-    }
-    req.SetBasicAuth(username, password)
-    rr := httptest.NewRecorder()
-    r.ServeHTTP(rr, req)
-    if status := rr.Code; status != http.StatusOK {
-        t.Errorf("handler returned wrong status code: got %v want %v",
-            status, http.StatusOK)
-    }
+	t.Run("Find content 1", func(t *testing.T) {
+		req, err := http.NewRequest("GET", "/api/v1/content/1", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.SetBasicAuth(username, password)
+		rr := httptest.NewRecorder()
+		r.ServeHTTP(rr, req)
+		if status := rr.Code; status != http.StatusOK {
+			t.Errorf("handler returned wrong status code: got %v want %v",
+				status, http.StatusOK)
+		}
 
-    expected := `{"ID":"1","Name":"Content 1"}`
-    if rr.Body.String() != expected {
-        t.Errorf("handler returned unexpected body: got %v want %v",
-            rr.Body.String(), expected)
-    }
-  })
+		expected := `{"ID":"1","Name":"Content 1"}`
+		if rr.Body.String() != expected {
+			t.Errorf("handler returned unexpected body: got %v want %v",
+				rr.Body.String(), expected)
+		}
+	})
 
-  t.Run("Find content 2", func(t *testing.T) {
-    req, err := http.NewRequest("GET", "/api/v1/content/2", nil)
-    if err != nil {
-        t.Fatal(err)
-    }
-    req.SetBasicAuth(username, password)
-    rr := httptest.NewRecorder()
-    r.ServeHTTP(rr, req)
-    if status := rr.Code; status != http.StatusOK {
-        t.Errorf("handler returned wrong status code: got %v want %v",
-            status, http.StatusOK)
-    }
+	t.Run("Find content 2", func(t *testing.T) {
+		req, err := http.NewRequest("GET", "/api/v1/content/2", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.SetBasicAuth(username, password)
+		rr := httptest.NewRecorder()
+		r.ServeHTTP(rr, req)
+		if status := rr.Code; status != http.StatusOK {
+			t.Errorf("handler returned wrong status code: got %v want %v",
+				status, http.StatusOK)
+		}
 
-    expected := `{"ID":"2","Name":"Content 2"}`
-    if rr.Body.String() != expected {
-        t.Errorf("handler returned unexpected body: got %v want %v",
-            rr.Body.String(), expected)
-    }
-  })
+		expected := `{"ID":"2","Name":"Content 2"}`
+		if rr.Body.String() != expected {
+			t.Errorf("handler returned unexpected body: got %v want %v",
+				rr.Body.String(), expected)
+		}
+	})
 
-  t.Run("Not Found", func(t *testing.T) {
-    req, err := http.NewRequest("GET", "/api/v1/content/3", nil)
-    if err != nil {
-        t.Fatal(err)
-    }
-    req.SetBasicAuth(username, password)
-    rr := httptest.NewRecorder()
-    r.ServeHTTP(rr, req)
-    if status := rr.Code; status != http.StatusNotFound {
-        t.Errorf("handler returned wrong status code: got %v want %v",
-            status, http.StatusOK)
-    }
+	t.Run("Not Found", func(t *testing.T) {
+		req, err := http.NewRequest("GET", "/api/v1/content/3", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.SetBasicAuth(username, password)
+		rr := httptest.NewRecorder()
+		r.ServeHTTP(rr, req)
+		if status := rr.Code; status != http.StatusNotFound {
+			t.Errorf("handler returned wrong status code: got %v want %v",
+				status, http.StatusOK)
+		}
 
-    expected := `{"error":"Invalid ID"}`
-    if rr.Body.String() != expected {
-        t.Errorf("handler returned unexpected body: got %v want %v",
-            rr.Body.String(), expected)
-    }
-  })
+		expected := `{"error":"Invalid ID"}`
+		if rr.Body.String() != expected {
+			t.Errorf("handler returned unexpected body: got %v want %v",
+				rr.Body.String(), expected)
+		}
+	})
 }
 
 func Test_Standard_CreateContent(t *testing.T) {
-  r := mux.NewRouter()
+	r := mux.NewRouter()
 
-  t.Run("Create content 3", func(t *testing.T) {
-    r.HandleFunc("/api/v1/content", BasicAuth(createContent, "Please enter your username and password")).Methods("POST")
-    var jsonStr = []byte(`{"ID":"3","Name":"Content 3"}`)
-    req, err := http.NewRequest("POST", "/api/v1/content", bytes.NewBuffer(jsonStr))
-    req.Header.Set("Content-Type", "application/json")
-    if err != nil {
-        t.Fatal(err)
-    }
-    req.SetBasicAuth(username, password)
-    rr := httptest.NewRecorder()
-    r.ServeHTTP(rr, req)
-    if status := rr.Code; status != http.StatusOK {
-        t.Errorf("handler returned wrong status code: got %v want %v",
-            status, http.StatusOK)
-    }
-    expected := `{"ID":"3","Name":"Content 3"}`
-    if rr.Body.String() != expected {
-        t.Errorf("handler returned unexpected body: got %v want %v",
-            rr.Body.String(), expected)
-    }
-  })
+	t.Run("Create content 3", func(t *testing.T) {
+		r.HandleFunc("/api/v1/content", BasicAuth(createContent, "Please enter your username and password")).Methods("POST")
+		var jsonStr = []byte(`{"ID":"3","Name":"Content 3"}`)
+		req, err := http.NewRequest("POST", "/api/v1/content", bytes.NewBuffer(jsonStr))
+		req.Header.Set("Content-Type", "application/json")
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.SetBasicAuth(username, password)
+		rr := httptest.NewRecorder()
+		r.ServeHTTP(rr, req)
+		if status := rr.Code; status != http.StatusOK {
+			t.Errorf("handler returned wrong status code: got %v want %v",
+				status, http.StatusOK)
+		}
+		expected := `{"ID":"3","Name":"Content 3"}`
+		if rr.Body.String() != expected {
+			t.Errorf("handler returned unexpected body: got %v want %v",
+				rr.Body.String(), expected)
+		}
+	})
 
-  t.Run("Find content 3", func(t *testing.T) {
-    r.HandleFunc("/api/v1/content/{id}", BasicAuth(getSingleContent, "Please enter your username and password")).Methods("GET")
-    req, err := http.NewRequest("GET", "/api/v1/content/3", nil)
-    if err != nil {
-        t.Fatal(err)
-    }
-    req.SetBasicAuth(username, password)
-    rr := httptest.NewRecorder()
-    r.ServeHTTP(rr, req)
-    if status := rr.Code; status != http.StatusOK {
-        t.Errorf("handler returned wrong status code: got %v want %v",
-            status, http.StatusOK)
-    }
+	t.Run("Find content 3", func(t *testing.T) {
+		r.HandleFunc("/api/v1/content/{id}", BasicAuth(getSingleContent, "Please enter your username and password")).Methods("GET")
+		req, err := http.NewRequest("GET", "/api/v1/content/3", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.SetBasicAuth(username, password)
+		rr := httptest.NewRecorder()
+		r.ServeHTTP(rr, req)
+		if status := rr.Code; status != http.StatusOK {
+			t.Errorf("handler returned wrong status code: got %v want %v",
+				status, http.StatusOK)
+		}
 
-    expected := `{"ID":"3","Name":"Content 3"}`
-    if rr.Body.String() != expected {
-        t.Errorf("handler returned unexpected body: got %v want %v",
-            rr.Body.String(), expected)
-    }
-  })
+		expected := `{"ID":"3","Name":"Content 3"}`
+		if rr.Body.String() != expected {
+			t.Errorf("handler returned unexpected body: got %v want %v",
+				rr.Body.String(), expected)
+		}
+	})
 
-  t.Run("Update content 3", func(t *testing.T) {
-    r.HandleFunc("/api/v1/content/{id}", BasicAuth(updateContent, "Please enter your username and password")).Methods("PUT")
-    var jsonStr = []byte(`{"ID":"3","Name":"New content 3"}`)
-    req, err := http.NewRequest("PUT", "/api/v1/content/3", bytes.NewBuffer(jsonStr))
-    req.Header.Set("Content-Type", "application/json")
-    if err != nil {
-        t.Fatal(err)
-    }
-    req.SetBasicAuth(username, password)
-    rr := httptest.NewRecorder()
-    r.ServeHTTP(rr, req)
-    if status := rr.Code; status != http.StatusOK {
-        t.Errorf("handler returned wrong status code: got %v want %v",
-            status, http.StatusOK)
-    }
+	t.Run("Update content 3", func(t *testing.T) {
+		r.HandleFunc("/api/v1/content/{id}", BasicAuth(updateContent, "Please enter your username and password")).Methods("PUT")
+		var jsonStr = []byte(`{"ID":"3","Name":"New content 3"}`)
+		req, err := http.NewRequest("PUT", "/api/v1/content/3", bytes.NewBuffer(jsonStr))
+		req.Header.Set("Content-Type", "application/json")
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.SetBasicAuth(username, password)
+		rr := httptest.NewRecorder()
+		r.ServeHTTP(rr, req)
+		if status := rr.Code; status != http.StatusOK {
+			t.Errorf("handler returned wrong status code: got %v want %v",
+				status, http.StatusOK)
+		}
 
-    expected := `{"ID":"3","Name":"New content 3"}`
-    if rr.Body.String() != expected {
-        t.Errorf("handler returned unexpected body: got %v want %v",
-            rr.Body.String(), expected)
-    }
-  })
-  t.Run("Delete content 3", func(t *testing.T) {
-    r.HandleFunc("/api/v1/content/{id}", BasicAuth(deleteContent, "Please enter your username and password")).Methods("DELETE")
-    req, err := http.NewRequest("DELETE", "/api/v1/content/3", nil)
-    if err != nil {
-        t.Fatal(err)
-    }
-    req.SetBasicAuth(username, password)
-    rr := httptest.NewRecorder()
-    r.ServeHTTP(rr, req)
-    if status := rr.Code; status != http.StatusOK {
-        t.Errorf("handler returned wrong status code: got %v want %v",
-            status, http.StatusOK)
-    }
-  })
+		expected := `{"ID":"3","Name":"New content 3"}`
+		if rr.Body.String() != expected {
+			t.Errorf("handler returned unexpected body: got %v want %v",
+				rr.Body.String(), expected)
+		}
+	})
+	t.Run("Delete content 3", func(t *testing.T) {
+		r.HandleFunc("/api/v1/content/{id}", BasicAuth(deleteContent, "Please enter your username and password")).Methods("DELETE")
+		req, err := http.NewRequest("DELETE", "/api/v1/content/3", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.SetBasicAuth(username, password)
+		rr := httptest.NewRecorder()
+		r.ServeHTTP(rr, req)
+		if status := rr.Code; status != http.StatusOK {
+			t.Errorf("handler returned wrong status code: got %v want %v",
+				status, http.StatusOK)
+		}
+	})
 
-  t.Run("Not Found", func(t *testing.T) {
-    r.HandleFunc("/api/v1/content/{id}", BasicAuth(getSingleContent, "Please enter your username and password")).Methods("GET")
-    req, err := http.NewRequest("GET", "/api/v1/content/3", nil)
-    if err != nil {
-        t.Fatal(err)
-    }
-    req.SetBasicAuth(username, password)
-    rr := httptest.NewRecorder()
-    r.ServeHTTP(rr, req)
-    if status := rr.Code; status != http.StatusNotFound {
-        t.Errorf("handler returned wrong status code: got %v want %v",
-            status, http.StatusOK)
-    }
+	t.Run("Not Found", func(t *testing.T) {
+		r.HandleFunc("/api/v1/content/{id}", BasicAuth(getSingleContent, "Please enter your username and password")).Methods("GET")
+		req, err := http.NewRequest("GET", "/api/v1/content/3", nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		req.SetBasicAuth(username, password)
+		rr := httptest.NewRecorder()
+		r.ServeHTTP(rr, req)
+		if status := rr.Code; status != http.StatusNotFound {
+			t.Errorf("handler returned wrong status code: got %v want %v",
+				status, http.StatusOK)
+		}
 
-    expected := `{"error":"Invalid ID"}`
-    if rr.Body.String() != expected {
-        t.Errorf("handler returned unexpected body: got %v want %v",
-            rr.Body.String(), expected)
-    }
-  })
+		expected := `{"error":"Invalid ID"}`
+		if rr.Body.String() != expected {
+			t.Errorf("handler returned unexpected body: got %v want %v",
+				rr.Body.String(), expected)
+		}
+	})
 }
 
 // Test using APITEST library - https://apitest.dev
