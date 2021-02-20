@@ -13,11 +13,11 @@ import (
 )
 
 var (
-    username    = os.Getenv("USERNAME")
-    password    = os.Getenv("PASSWORD")
-		response    = os.Getenv("RESPONSE")
-		port        = os.Getenv("PORT")
-		metricsPort = os.Getenv("METRICSPORT")
+	username    = os.Getenv("USERNAME")
+	password    = os.Getenv("PASSWORD")
+	response    = os.Getenv("RESPONSE")
+	port        = os.Getenv("PORT")
+	metricsPort = os.Getenv("METRICSPORT")
 )
 
 func init() {
