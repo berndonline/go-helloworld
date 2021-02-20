@@ -13,9 +13,11 @@ import (
 )
 
 var (
-    username = os.Getenv("USERNAME")
-    password = os.Getenv("PASSWORD")
-		response = os.Getenv("RESPONSE")
+    username    = os.Getenv("USERNAME")
+    password    = os.Getenv("PASSWORD")
+		response    = os.Getenv("RESPONSE")
+		port        = os.Getenv("PORT")
+		metricsPort = os.Getenv("METRICSPORT")
 )
 
 func init() {
@@ -27,6 +29,12 @@ func init() {
 	}
 	if response == "" {
 		response = "Hello, World - REST API!"
+	}
+	if port == "" {
+		port = "8080"
+	}
+	if metricsPort == "" {
+		metricsPort = "9100"
 	}
 }
 
@@ -91,16 +99,6 @@ func main() {
 	v1.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
-
-	port := os.Getenv("PORT")
-	metricsPort := os.Getenv("METRICSPORT")
-
-	if port == "" {
-		port = "8080"
-	}
-	if metricsPort == "" {
-		metricsPort = "9100"
-	}
 
 	go func() {
 		log.Printf("helloworld: metrics listening on port %s", metricsPort)
