@@ -12,19 +12,26 @@ import (
 	"io"
 )
 
-const (
-	ADMIN_USER     = "admin"
-	ADMIN_PASSWORD = "password"
+var (
+    username = os.Getenv("USERNAME")
+    password = os.Getenv("PASSWORD")
+		response = os.Getenv("RESPONSE")
 )
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	log.Print("helloworld: defaultHandler received a request")
-	response := os.Getenv("RESPONSE")
-
+func init() {
+	if username == "" {
+		username = "admin"
+	}
+	if password == "" {
+		password = "password"
+	}
 	if response == "" {
 		response = "Hello, World - REST API!"
 	}
+}
 
+func handler(w http.ResponseWriter, r *http.Request) {
+	log.Print("helloworld: defaultHandler received a request")
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
 }
@@ -32,7 +39,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-
 	io.WriteString(w, `{"alive": true}`)
 }
 
@@ -40,8 +46,8 @@ func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		user, pass, ok := r.BasicAuth()
 		if !ok || subtle.ConstantTimeCompare([]byte(user),
-			[]byte(ADMIN_USER)) != 1 || subtle.ConstantTimeCompare([]byte(pass),
-			[]byte(ADMIN_PASSWORD)) != 1 {
+			[]byte(username)) != 1 || subtle.ConstantTimeCompare([]byte(pass),
+			[]byte(password)) != 1 {
 			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
 			w.WriteHeader(401)
 			w.Write([]byte("You are Unauthorized to access the application.\n"))
@@ -85,7 +91,7 @@ func main() {
 	v1.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
-	
+
 	port := os.Getenv("PORT")
 	metricsPort := os.Getenv("METRICSPORT")
 

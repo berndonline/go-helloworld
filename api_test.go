@@ -20,7 +20,7 @@ func Test_Standard_getContentIndex(t *testing.T) {
   if err != nil {
       t.Fatal(err)
   }
-  req.SetBasicAuth(ADMIN_USER, ADMIN_PASSWORD)
+  req.SetBasicAuth(username, password)
 
   rr := httptest.NewRecorder()
   r.ServeHTTP(rr, req)
@@ -46,7 +46,7 @@ func Test_Standard_getSingleContent(t *testing.T) {
     if err != nil {
         t.Fatal(err)
     }
-    req.SetBasicAuth(ADMIN_USER, ADMIN_PASSWORD)
+    req.SetBasicAuth(username, password)
     rr := httptest.NewRecorder()
     r.ServeHTTP(rr, req)
     if status := rr.Code; status != http.StatusOK {
@@ -66,7 +66,7 @@ func Test_Standard_getSingleContent(t *testing.T) {
     if err != nil {
         t.Fatal(err)
     }
-    req.SetBasicAuth(ADMIN_USER, ADMIN_PASSWORD)
+    req.SetBasicAuth(username, password)
     rr := httptest.NewRecorder()
     r.ServeHTTP(rr, req)
     if status := rr.Code; status != http.StatusOK {
@@ -86,7 +86,7 @@ func Test_Standard_getSingleContent(t *testing.T) {
     if err != nil {
         t.Fatal(err)
     }
-    req.SetBasicAuth(ADMIN_USER, ADMIN_PASSWORD)
+    req.SetBasicAuth(username, password)
     rr := httptest.NewRecorder()
     r.ServeHTTP(rr, req)
     if status := rr.Code; status != http.StatusNotFound {
@@ -113,7 +113,7 @@ func Test_Standard_CreateContent(t *testing.T) {
     if err != nil {
         t.Fatal(err)
     }
-    req.SetBasicAuth(ADMIN_USER, ADMIN_PASSWORD)
+    req.SetBasicAuth(username, password)
     rr := httptest.NewRecorder()
     r.ServeHTTP(rr, req)
     if status := rr.Code; status != http.StatusOK {
@@ -133,7 +133,7 @@ func Test_Standard_CreateContent(t *testing.T) {
     if err != nil {
         t.Fatal(err)
     }
-    req.SetBasicAuth(ADMIN_USER, ADMIN_PASSWORD)
+    req.SetBasicAuth(username, password)
     rr := httptest.NewRecorder()
     r.ServeHTTP(rr, req)
     if status := rr.Code; status != http.StatusOK {
@@ -156,7 +156,7 @@ func Test_Standard_CreateContent(t *testing.T) {
     if err != nil {
         t.Fatal(err)
     }
-    req.SetBasicAuth(ADMIN_USER, ADMIN_PASSWORD)
+    req.SetBasicAuth(username, password)
     rr := httptest.NewRecorder()
     r.ServeHTTP(rr, req)
     if status := rr.Code; status != http.StatusOK {
@@ -176,7 +176,7 @@ func Test_Standard_CreateContent(t *testing.T) {
     if err != nil {
         t.Fatal(err)
     }
-    req.SetBasicAuth(ADMIN_USER, ADMIN_PASSWORD)
+    req.SetBasicAuth(username, password)
     rr := httptest.NewRecorder()
     r.ServeHTTP(rr, req)
     if status := rr.Code; status != http.StatusOK {
@@ -191,7 +191,7 @@ func Test_Standard_CreateContent(t *testing.T) {
     if err != nil {
         t.Fatal(err)
     }
-    req.SetBasicAuth(ADMIN_USER, ADMIN_PASSWORD)
+    req.SetBasicAuth(username, password)
     rr := httptest.NewRecorder()
     r.ServeHTTP(rr, req)
     if status := rr.Code; status != http.StatusNotFound {
