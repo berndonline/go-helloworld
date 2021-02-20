@@ -10,28 +10,28 @@ import (
 )
 
 var (
-	appName = string("helloworld")
-	version = prometheus.NewGauge(prometheus.GaugeOpts{
-		Name: "version",
-		Help: "Version information about this binary",
-		ConstLabels: map[string]string{"appName": appName},
-	})
-	httpRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
-		Name: "http_request_duration_seconds",
-		Help: "Duration of all HTTP requests",
-		Buckets: prometheus.LinearBuckets(0.01, 0.05, 10),
-	  },
-		[]string{"method", "code", "path"})
-	httpRequestsResponseTime = prometheus.NewSummary(prometheus.SummaryOpts{
-		Namespace: "http",
-		Name:      "response_time_seconds",
-		Help:      "Request response times",
+  appName = string("helloworld")
+  version = prometheus.NewGauge(prometheus.GaugeOpts{
+  	Name: "version",
+  	Help: "Version information about this binary",
+  	ConstLabels: map[string]string{"appName": appName},
   })
-	httpRequestsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "http_requests_total",
-		Help: "How many HTTP requests processed, partitioned by status code, method and HTTP path.",
-		},
-		[]string{"code", "method", "path"})
+  httpRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+  	Name: "http_request_duration_seconds",
+  	Help: "Duration of all HTTP requests",
+  	Buckets: prometheus.LinearBuckets(0.01, 0.05, 10),
+  	},
+  	[]string{"method", "code", "path"})
+  httpRequestsResponseTime = prometheus.NewSummary(prometheus.SummaryOpts{
+  	Namespace: "http",
+  	Name:      "response_time_seconds",
+  	Help:      "Request response times",
+  })
+  httpRequestsTotal = prometheus.NewCounterVec(prometheus.CounterOpts{
+  	Name: "http_requests_total",
+  	Help: "How many HTTP requests processed, partitioned by status code, method and HTTP path.",
+  	},
+  	[]string{"code", "method", "path"})
   httpRequestSizeBytes = prometheus.NewSummaryVec(prometheus.SummaryOpts{
     Name:      "http_request_size_bytes",
     Help:      "Summary of request bytes received",
