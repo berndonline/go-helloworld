@@ -45,28 +45,28 @@ var (
 )
 
 func InstrumentHandler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		start := time.Now()
+  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    start := time.Now()
 
-		delegate := &responseWriterDelegator{ResponseWriter: w}
-		rw := delegate
+    delegate := &responseWriterDelegator{ResponseWriter: w}
+    rw := delegate
 
-		next.ServeHTTP(rw, r) // call original
+    next.ServeHTTP(rw, r) // call original
 
-		route := mux.CurrentRoute(r)
-		path, _ := route.GetPathTemplate()
+    route := mux.CurrentRoute(r)
+    path, _ := route.GetPathTemplate()
 
-		code := strconv.Itoa(delegate.status)
-		method := strings.ToLower(r.Method)
+    code := strconv.Itoa(delegate.status)
+    method := strings.ToLower(r.Method)
 
-		httpRequestsResponseTime.Observe(float64(time.Since(start).Seconds()))
-		httpRequestsTotal.WithLabelValues(code,method,path).Inc()
+    httpRequestsResponseTime.Observe(float64(time.Since(start).Seconds()))
+    httpRequestsTotal.WithLabelValues(code,method,path).Inc()
     httpRequestSizeBytes.WithLabelValues(code,method,path).Observe(float64(estimateRequestSize(r)))
     httpResponseSizeBytes.WithLabelValues(code,method,path).Observe(float64(delegate.written))
-		timer := prometheus.NewTimer(httpRequestDuration.WithLabelValues(method, code, path))
-		timer.ObserveDuration()
+    timer := prometheus.NewTimer(httpRequestDuration.WithLabelValues(method, code, path))
+    timer.ObserveDuration()
 
-	})
+  })
 }
 
 type responseWriterDelegator struct {
