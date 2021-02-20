@@ -23,10 +23,10 @@ func Test_Standard_InstrumentHandler(t *testing.T) {
 
 	router := mux.NewRouter()
 	router.Path("/metrics").Handler(promhttp.HandlerFor(r, promhttp.HandlerOpts{}))
-  router.HandleFunc("/", handler)
+	router.HandleFunc("/", handler)
 	router.Use(InstrumentHandler)
 
-  rr := httptest.NewRecorder()
+	rr := httptest.NewRecorder()
 
 	req1, err := http.NewRequest("GET", "/", nil)
 	if err != nil {
