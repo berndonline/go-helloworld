@@ -9,8 +9,8 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"strings"
 	"os"
+	"strings"
 )
 
 var (
@@ -40,7 +40,7 @@ func init() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-  log.Print("helloworld: defaultHandler received a request - " + getIPAddress(r))
+	log.Print("helloworld: defaultHandler received a request - " + getIPAddress(r))
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
 }
@@ -68,10 +68,10 @@ func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 }
 
 func getIPAddress(r *http.Request) string {
-    var ip string
-		ip = r.Header.Get("CF-Connecting-IP")
-    ip = strings.TrimSpace(ip)
-    return ip
+	var ip string
+	ip = r.Header.Get("CF-Connecting-IP")
+	ip = strings.TrimSpace(ip)
+	return ip
 }
 
 func main() {
