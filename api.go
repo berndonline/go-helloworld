@@ -9,8 +9,8 @@ import (
 )
 
 type api struct {
-	ID   string `json:"ID"`
-	Name string `json:"Name"`
+	ID   string `json:"id"`
+	Name string `json:"name"`
 }
 
 type allContent []api
