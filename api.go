@@ -27,7 +27,7 @@ var contents = allContent{
 }
 
 func getIndexContent(w http.ResponseWriter, r *http.Request) {
-	log.Print("helloworld-api: getIndexContent received a request - " + "X-Forwarded-For: " + r.Header.Get("CF-Connecting-IP"))
+	log.Print("helloworld-api: getIndexContent received a request - " + getIPAddress(r))
 	respondWithJson(w, http.StatusOK, contents)
 }
 
@@ -35,7 +35,7 @@ func getSingleContent(w http.ResponseWriter, r *http.Request) {
 	contentID := mux.Vars(r)["id"]
 	for _, singleContent := range contents {
 		if singleContent.ID == contentID {
-			log.Print("helloworld-api: getSingleContent received a request - " + "X-Forwarded-For: " + r.Header.Get("CF-Connecting-IP"))
+			log.Print("helloworld-api: getSingleContent received a request - " + getIPAddress(r))
 			respondWithJson(w, http.StatusOK, singleContent)
 			return
 		}
@@ -53,7 +53,7 @@ func createContent(w http.ResponseWriter, r *http.Request) {
 	}
 	json.Unmarshal(reqBody, &newContent)
 	contents = append(contents, newContent)
-	log.Print("helloworld-api: createContent received a request - " + "X-Forwarded-For: " + r.Header.Get("CF-Connecting-IP"))
+	log.Print("helloworld-api: createContent received a request - " + getIPAddress(r))
 	respondWithJson(w, http.StatusOK, newContent)
 }
 
@@ -73,7 +73,7 @@ func updateContent(w http.ResponseWriter, r *http.Request) {
 			respondWithJson(w, http.StatusOK, singleContent)
 		}
 	}
-	log.Print("helloworld-api: updateContent received a request - " + "X-Forwarded-For: " + r.Header.Get("CF-Connecting-IP"))
+	log.Print("helloworld-api: updateContent received a request - " + getIPAddress(r))
 }
 
 func deleteContent(w http.ResponseWriter, r *http.Request) {
@@ -81,7 +81,7 @@ func deleteContent(w http.ResponseWriter, r *http.Request) {
 	for i, singleContent := range contents {
 		if singleContent.ID == contentID {
 			contents = append(contents[:i], contents[i+1:]...)
-			log.Print("helloworld-api: deleteContent received a request - " + "X-Forwarded-For: " + r.Header.Get("CF-Connecting-IP"))
+			log.Print("helloworld-api: deleteContent received a request - " + getIPAddress(r))
 			respondWithJson(w, http.StatusOK, "The content with has been deleted successfully")
 		}
 	}
