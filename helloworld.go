@@ -39,7 +39,7 @@ func init() {
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
-	log.Print("helloworld: defaultHandler received a request")
+	log.Print("helloworld: defaultHandler received a request - " + "X-Forwarded-For: " + r.Header.Get("CF-Connecting-IP"))
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
 }
