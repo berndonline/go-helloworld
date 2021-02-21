@@ -78,7 +78,6 @@ func updateContent(w http.ResponseWriter, r *http.Request) {
 
 func deleteContent(w http.ResponseWriter, r *http.Request) {
 	contentID := mux.Vars(r)["id"]
-
 	for i, singleContent := range contents {
 		if singleContent.ID == contentID {
 			contents = append(contents[:i], contents[i+1:]...)
