@@ -30,7 +30,7 @@ func Test_Standard_getContentIndex(t *testing.T) {
 			status, http.StatusOK)
 	}
 
-	expected := `[{"ID":"1","Name":"Content 1"},{"ID":"2","Name":"Content 2"}]`
+	expected := `[{"id":"1","name":"Content 1"},{"id":"2","name":"Content 2"}]`
 	if rr.Body.String() != expected {
 		t.Errorf("handler returned unexpected body: got %v want %v",
 			rr.Body.String(), expected)
@@ -54,7 +54,7 @@ func Test_Standard_getSingleContent(t *testing.T) {
 				status, http.StatusOK)
 		}
 
-		expected := `{"ID":"1","Name":"Content 1"}`
+		expected := `{"id":"1","name":"Content 1"}`
 		if rr.Body.String() != expected {
 			t.Errorf("handler returned unexpected body: got %v want %v",
 				rr.Body.String(), expected)
@@ -74,7 +74,7 @@ func Test_Standard_getSingleContent(t *testing.T) {
 				status, http.StatusOK)
 		}
 
-		expected := `{"ID":"2","Name":"Content 2"}`
+		expected := `{"id":"2","name":"Content 2"}`
 		if rr.Body.String() != expected {
 			t.Errorf("handler returned unexpected body: got %v want %v",
 				rr.Body.String(), expected)
@@ -120,7 +120,7 @@ func Test_Standard_CreateContent(t *testing.T) {
 			t.Errorf("handler returned wrong status code: got %v want %v",
 				status, http.StatusOK)
 		}
-		expected := `{"ID":"3","Name":"Content 3"}`
+		expected := `{"id":"3","name":"Content 3"}`
 		if rr.Body.String() != expected {
 			t.Errorf("handler returned unexpected body: got %v want %v",
 				rr.Body.String(), expected)
@@ -141,7 +141,7 @@ func Test_Standard_CreateContent(t *testing.T) {
 				status, http.StatusOK)
 		}
 
-		expected := `{"ID":"3","Name":"Content 3"}`
+		expected := `{"id":"3","name":"Content 3"}`
 		if rr.Body.String() != expected {
 			t.Errorf("handler returned unexpected body: got %v want %v",
 				rr.Body.String(), expected)
@@ -164,7 +164,7 @@ func Test_Standard_CreateContent(t *testing.T) {
 				status, http.StatusOK)
 		}
 
-		expected := `{"ID":"3","Name":"New content 3"}`
+		expected := `{"id":"3","name":"New content 3"}`
 		if rr.Body.String() != expected {
 			t.Errorf("handler returned unexpected body: got %v want %v",
 				rr.Body.String(), expected)
