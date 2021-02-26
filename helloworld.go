@@ -90,6 +90,16 @@ func main() {
 	v1.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
+  var v2 = api.PathPrefix("/v2").Subrouter()
+  v2.HandleFunc("/login", jwtLogin).Methods("POST")
+	v2.HandleFunc("/content", jwtAuthentication(getIndexContent)).Methods("GET")
+	v2.HandleFunc("/content", jwtAuthentication(createContent)).Methods("POST")
+	v2.HandleFunc("/content/{id}", jwtAuthentication(getSingleContent)).Methods("GET")
+	v2.HandleFunc("/content/{id}", jwtAuthentication(updateContent)).Methods("PUT")
+	v2.HandleFunc("/content/{id}", jwtAuthentication(deleteContent)).Methods("DELETE")
+	v2.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	})
 
 	go func() {
 		log.Printf("helloworld: metrics listening on port %s", metricsPort)
