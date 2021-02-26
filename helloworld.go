@@ -1,7 +1,6 @@
 package main
 
 import (
-	"crypto/subtle"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
@@ -45,26 +44,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
 }
 
-func healthHandler(w http.ResponseWriter, r *http.Request) {
+func healthz(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	io.WriteString(w, `{"alive": true}`)
-}
-
-func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		user, pass, ok := r.BasicAuth()
-		if !ok || subtle.ConstantTimeCompare([]byte(user),
-			[]byte(username)) != 1 || subtle.ConstantTimeCompare([]byte(pass),
-			[]byte(password)) != 1 {
-			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
-			w.WriteHeader(401)
-			w.Write([]byte("You are Unauthorized to access the application.\n"))
-			log.Print("helloworld-api: authentication failed - " + getIPAddress(r))
-			return
-		}
-		handler(w, r)
-	}
 }
 
 func getIPAddress(r *http.Request) string {
@@ -92,7 +75,7 @@ func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	router.Use(InstrumentHandler)
 	router.HandleFunc("/", handler)
-	router.HandleFunc("/healthz", healthHandler)
+	router.HandleFunc("/healthz", healthz)
 
 	var api = router.PathPrefix("/api").Subrouter()
 	api.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

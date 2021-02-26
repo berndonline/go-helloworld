@@ -34,9 +34,9 @@ func Test_Standard_Handler(t *testing.T) {
 	}
 }
 
-func Test_Standard_HealthHandler(t *testing.T) {
+func Test_Standard_Healthz(t *testing.T) {
 	r := mux.NewRouter()
-	r.HandleFunc("/healthz", healthHandler)
+	r.HandleFunc("/healthz", healthz)
 	req, err := http.NewRequest("GET", "/healthz", nil)
 	if err != nil {
 		t.Fatal(err)
