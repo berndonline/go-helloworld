@@ -54,7 +54,7 @@ func createContent(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(reqBody, &newContent)
 	contents = append(contents, newContent)
 	log.Print("helloworld-api: createContent received a request - " + getIPAddress(r))
-	respondWithJson(w, http.StatusOK, newContent)
+	respondWithJson(w, http.StatusCreated, newContent)
 }
 
 func updateContent(w http.ResponseWriter, r *http.Request) {
