@@ -6,7 +6,6 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"log"
 	"net/http"
-	// "fmt"
 	"time"
 )
 
@@ -116,13 +115,12 @@ func jwtAuth(handler http.HandlerFunc) http.HandlerFunc {
 }
 
 func jwtRefresh(w http.ResponseWriter, r *http.Request) {
-
 	claims := &Claims{}
-
 	expirationTime := time.Now().Add(5 * time.Minute)
 	claims.ExpiresAt = expirationTime.Unix()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(jwtKey)
+
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Create new token failed.\n"))
