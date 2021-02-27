@@ -109,6 +109,7 @@ func main() {
 	// version 2 of the rest-api using json web token (JWT) authentication
 	var v2 = api.PathPrefix("/v2").Subrouter()
 	v2.HandleFunc("/login", jwtLogin).Methods("POST")
+  v2.HandleFunc("/logout", jwtLogout).Methods("POST")
 	v2.HandleFunc("/refresh", jwtAuth(jwtRefresh)).Methods("POST")
 	v2.HandleFunc("/content/", jwtAuth(getIndexContent)).Methods("GET")
 	v2.HandleFunc("/content/", jwtAuth(createContent)).Methods("POST")

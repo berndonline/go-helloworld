@@ -133,3 +133,12 @@ func jwtRefresh(w http.ResponseWriter, r *http.Request) {
 	})
 	w.Write([]byte("Token renewed.\n"))
 }
+
+ func jwtLogout(w http.ResponseWriter, r *http.Request) {
+ 	c := http.Cookie{
+ 		Name:   "token",
+ 		MaxAge: -1}
+ 	http.SetCookie(w, &c)
+
+ 	w.Write([]byte("Logged out!\n"))
+ }
