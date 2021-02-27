@@ -76,12 +76,11 @@ func jwtLogin(w http.ResponseWriter, r *http.Request) {
 		Value:   tokenString,
 		Expires: expirationTime,
 	})
-	w.Write([]byte("Token successfully issued.\n"))
+	w.Write([]byte("Token issued.\n"))
 }
 
 func jwtAuth(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		c, err := r.Cookie("token")
 		if err != nil {
 			if err == http.ErrNoCookie {
@@ -123,7 +122,7 @@ func jwtRefresh(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		w.Write([]byte("Create new token failed.\n"))
+		w.Write([]byte("New token failed.\n"))
 		return
 	}
 
@@ -132,5 +131,5 @@ func jwtRefresh(w http.ResponseWriter, r *http.Request) {
 		Value:   tokenString,
 		Expires: expirationTime,
 	})
-	w.Write([]byte("Token successfully renewed.\n"))
+	w.Write([]byte("Token renewed.\n"))
 }
