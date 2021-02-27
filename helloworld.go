@@ -5,10 +5,12 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	mgo "gopkg.in/mgo.v2"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -16,6 +18,11 @@ var (
 	response    = os.Getenv("RESPONSE")
 	httpPort    = os.Getenv("PORT")
 	metricsPort = os.Getenv("METRICSPORT")
+	mongodb, _  = strconv.ParseBool(os.Getenv("MONGODB"))
+	server      = os.Getenv("SERVER")
+	database    = os.Getenv("DATABASE")
+	dao         = contentsDAO{}
+	db          *mgo.Database
 )
 
 func init() {
@@ -27,6 +34,17 @@ func init() {
 	}
 	if metricsPort == "" {
 		metricsPort = "9100"
+	}
+	if mongodb != false {
+		if server == "" {
+			server = "mongodb"
+		}
+		if database == "" {
+			database = "contents_db"
+		}
+		dao.Server = server
+		dao.Database = database
+		dao.Connect()
 	}
 }
 
