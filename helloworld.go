@@ -84,6 +84,7 @@ func main() {
 	})
 	var v2 = api.PathPrefix("/v2").Subrouter()
 	v2.HandleFunc("/login", jwtLogin).Methods("POST")
+	v2.HandleFunc("/refresh", jwtAuth(jwtRefresh)).Methods("POST")
 	v2.HandleFunc("/content", jwtAuth(getIndexContent)).Methods("GET")
 	v2.HandleFunc("/content", jwtAuth(createContent)).Methods("POST")
 	v2.HandleFunc("/content/{id}", jwtAuth(getSingleContent)).Methods("GET")
