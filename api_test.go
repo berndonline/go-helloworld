@@ -207,29 +207,29 @@ func Test_CreateContent(t *testing.T) {
 	})
 }
 
-	func Test_jwtChecks(t *testing.T) {
-		r := mux.NewRouter()
+func Test_jwtChecks(t *testing.T) {
+	r := mux.NewRouter()
 
-		t.Run("JWT Login", func(t *testing.T) {
-			r.HandleFunc("/api/v2/login", jwtLogin).Methods("POST")
-			var jsonStr = []byte(`{"username":"user1","password":"password1"}`)
-			req, err := http.NewRequest("POST", "/api/v2/login", bytes.NewBuffer(jsonStr))
-			if err != nil {
-				t.Fatal(err)
-			}
+	t.Run("JWT Login", func(t *testing.T) {
+		r.HandleFunc("/api/v2/login", jwtLogin).Methods("POST")
+		var jsonStr = []byte(`{"username":"user1","password":"password1"}`)
+		req, err := http.NewRequest("POST", "/api/v2/login", bytes.NewBuffer(jsonStr))
+		if err != nil {
+			t.Fatal(err)
+		}
 
-			rr := httptest.NewRecorder()
-			r.ServeHTTP(rr, req)
+		rr := httptest.NewRecorder()
+		r.ServeHTTP(rr, req)
 
-			if status := rr.Code; status != http.StatusOK {
-				t.Errorf("handler returned wrong status code: got %v want %v",
-					status, http.StatusOK)
-			}
+		if status := rr.Code; status != http.StatusOK {
+			t.Errorf("handler returned wrong status code: got %v want %v",
+				status, http.StatusOK)
+		}
 
-			expected := "Token successfully issued.\n"
-			if rr.Body.String() != expected {
-				t.Errorf("handler returned unexpected body: got %v want %v",
-					rr.Body.String(), expected)
-			}
+		expected := "Token successfully issued.\n"
+		if rr.Body.String() != expected {
+			t.Errorf("handler returned unexpected body: got %v want %v",
+				rr.Body.String(), expected)
+		}
 	})
 }
