@@ -107,7 +107,7 @@ func Test_CreateContent(t *testing.T) {
 
 	t.Run("Create content 3", func(t *testing.T) {
 		r.HandleFunc("/api/v1/content", basicAuth(createContent, "Please enter your username and password")).Methods("POST")
-		var jsonStr = []byte(`{"ID":"3","Name":"Content 3"}`)
+		var jsonStr = []byte(`{"id":"3","name":"Content 3"}`)
 		req, err := http.NewRequest("POST", "/api/v1/content", bytes.NewBuffer(jsonStr))
 		req.Header.Set("Content-Type", "application/json")
 		if err != nil {
@@ -116,9 +116,9 @@ func Test_CreateContent(t *testing.T) {
 		req.SetBasicAuth(username, password)
 		rr := httptest.NewRecorder()
 		r.ServeHTTP(rr, req)
-		if status := rr.Code; status != http.StatusOK {
+		if status := rr.Code; status != http.StatusCreated {
 			t.Errorf("handler returned wrong status code: got %v want %v",
-				status, http.StatusOK)
+				status, http.StatusCreated)
 		}
 		expected := `{"id":"3","name":"Content 3"}`
 		if rr.Body.String() != expected {
@@ -150,7 +150,7 @@ func Test_CreateContent(t *testing.T) {
 
 	t.Run("Update content 3", func(t *testing.T) {
 		r.HandleFunc("/api/v1/content/{id}", basicAuth(updateContent, "Please enter your username and password")).Methods("PUT")
-		var jsonStr = []byte(`{"ID":"3","Name":"New content 3"}`)
+		var jsonStr = []byte(`{"id":"3","name":"New content 3"}`)
 		req, err := http.NewRequest("PUT", "/api/v1/content/3", bytes.NewBuffer(jsonStr))
 		req.Header.Set("Content-Type", "application/json")
 		if err != nil {
@@ -204,5 +204,32 @@ func Test_CreateContent(t *testing.T) {
 			t.Errorf("handler returned unexpected body: got %v want %v",
 				rr.Body.String(), expected)
 		}
+	})
+}
+
+	func Test_jwtChecks(t *testing.T) {
+		r := mux.NewRouter()
+
+		t.Run("JWT Login", func(t *testing.T) {
+			r.HandleFunc("/api/v2/login", jwtLogin).Methods("POST")
+			var jsonStr = []byte(`{"username":"user1","password":"password1"}`)
+			req, err := http.NewRequest("POST", "/api/v2/login", bytes.NewBuffer(jsonStr))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			rr := httptest.NewRecorder()
+			r.ServeHTTP(rr, req)
+
+			if status := rr.Code; status != http.StatusOK {
+				t.Errorf("handler returned wrong status code: got %v want %v",
+					status, http.StatusOK)
+			}
+
+			expected := "Token successfully issued.\n"
+			if rr.Body.String() != expected {
+				t.Errorf("handler returned unexpected body: got %v want %v",
+					rr.Body.String(), expected)
+			}
 	})
 }

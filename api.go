@@ -157,7 +157,6 @@ func updateContent(w http.ResponseWriter, r *http.Request) {
 func deleteContent(w http.ResponseWriter, r *http.Request) {
 	if mongodb != false {
 
-		defer r.Body.Close()
 		content, err := dao.FindById(mux.Vars(r)["id"])
 		if err != nil {
 			respondWithError(w, http.StatusBadRequest, "Invalid ID")
@@ -174,7 +173,6 @@ func deleteContent(w http.ResponseWriter, r *http.Request) {
 
 	} else {
 
-		defer r.Body.Close()
 		contentID := mux.Vars(r)["id"]
 		for i, singleContent := range contents {
 			if singleContent.ID == contentID {
