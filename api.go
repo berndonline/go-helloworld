@@ -56,7 +56,7 @@ func getSingleContent(w http.ResponseWriter, r *http.Request) {
 
 		contentID, err := dao.FindById(mux.Vars(r)["id"])
 		if err != nil {
-			respondWithError(w, http.StatusBadRequest, "Invalid ID")
+			respondWithError(w, http.StatusNotFound, "Invalid ID")
 			log.Print("helloworld-api: getSingleContent invalid")
 			return
 		}
