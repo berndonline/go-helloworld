@@ -82,7 +82,7 @@ func jwtLogin(w http.ResponseWriter, r *http.Request) {
 
 func jwtAuth(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		
+
 		c, err := r.Cookie("token")
 		if err != nil {
 			if err == http.ErrNoCookie {
