@@ -11,7 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-func Test_Standard_InstrumentHandler(t *testing.T) {
+func Test_InstrumentHandler(t *testing.T) {
 
 	r := prometheus.NewRegistry()
 	r.MustRegister(httpRequestDuration)

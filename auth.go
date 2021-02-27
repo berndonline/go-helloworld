@@ -12,19 +12,35 @@ import (
 
 var jwtKey = []byte("my_secret_key")
 
-var users = map[string]string{
-	"user1": "password1",
-	"user2": "password2",
-}
-
 type Credentials struct {
 	Password string `json:"password"`
 	Username string `json:"username"`
 }
 
+var users = map[string]string{
+	"user1": "password1",
+	"user2": "password2",
+}
+
 type Claims struct {
 	Username string `json:"username"`
 	jwt.StandardClaims
+}
+
+func basicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, pass, ok := r.BasicAuth()
+		expectedPassword := users[user]
+		if !ok || subtle.ConstantTimeCompare([]byte(pass),
+			[]byte(expectedPassword)) != 1 {
+			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
+			w.WriteHeader(401)
+			w.Write([]byte("You are Unauthorized to access the application.\n"))
+			log.Print("helloworld-api: authentication failed - " + getIPAddress(r))
+			return
+		}
+		handler(w, r)
+	}
 }
 
 func jwtLogin(w http.ResponseWriter, r *http.Request) {
@@ -80,7 +96,7 @@ func jwtLogin(w http.ResponseWriter, r *http.Request) {
 }
 
 // func Authentication(w http.ResponseWriter, r *http.Request) {
-func jwtAuthentication(handler http.HandlerFunc) http.HandlerFunc {
+func jwtAuth(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// We can obtain the session token from the requests cookies, which come with every request
 		c, err := r.Cookie("token")
@@ -124,22 +140,6 @@ func jwtAuthentication(handler http.HandlerFunc) http.HandlerFunc {
 		// Finally, return the welcome message to the user, along with their
 		// username given in the token
 		// w.Write([]byte(fmt.Sprintf("Welcome %s!", claims.Username)))
-		handler(w, r)
-	}
-}
-
-func BasicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		user, pass, ok := r.BasicAuth()
-		if !ok || subtle.ConstantTimeCompare([]byte(user),
-			[]byte(username)) != 1 || subtle.ConstantTimeCompare([]byte(pass),
-			[]byte(password)) != 1 {
-			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
-			w.WriteHeader(401)
-			w.Write([]byte("You are Unauthorized to access the application.\n"))
-			log.Print("helloworld-api: authentication failed - " + getIPAddress(r))
-			return
-		}
 		handler(w, r)
 	}
 }

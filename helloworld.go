@@ -13,20 +13,12 @@ import (
 )
 
 var (
-	username    = os.Getenv("USERNAME")
-	password    = os.Getenv("PASSWORD")
 	response    = os.Getenv("RESPONSE")
 	httpPort    = os.Getenv("PORT")
 	metricsPort = os.Getenv("METRICSPORT")
 )
 
 func init() {
-	if username == "" {
-		username = "admin"
-	}
-	if password == "" {
-		password = "password"
-	}
 	if response == "" {
 		response = "Hello, World - REST API!"
 	}
@@ -82,21 +74,21 @@ func main() {
 		w.WriteHeader(http.StatusNotFound)
 	})
 	var v1 = api.PathPrefix("/v1").Subrouter()
-	v1.HandleFunc("/content", BasicAuth(getIndexContent, "Please enter your username and password")).Methods("GET")
-	v1.HandleFunc("/content", BasicAuth(createContent, "Please enter your username and password")).Methods("POST")
-	v1.HandleFunc("/content/{id}", BasicAuth(getSingleContent, "Please enter your username and password")).Methods("GET")
-	v1.HandleFunc("/content/{id}", BasicAuth(updateContent, "Please enter your username and password")).Methods("PUT")
-	v1.HandleFunc("/content/{id}", BasicAuth(deleteContent, "Please enter your username and password")).Methods("DELETE")
+	v1.HandleFunc("/content", basicAuth(getIndexContent, "Please enter your username and password")).Methods("GET")
+	v1.HandleFunc("/content", basicAuth(createContent, "Please enter your username and password")).Methods("POST")
+	v1.HandleFunc("/content/{id}", basicAuth(getSingleContent, "Please enter your username and password")).Methods("GET")
+	v1.HandleFunc("/content/{id}", basicAuth(updateContent, "Please enter your username and password")).Methods("PUT")
+	v1.HandleFunc("/content/{id}", basicAuth(deleteContent, "Please enter your username and password")).Methods("DELETE")
 	v1.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
 	var v2 = api.PathPrefix("/v2").Subrouter()
 	v2.HandleFunc("/login", jwtLogin).Methods("POST")
-	v2.HandleFunc("/content", jwtAuthentication(getIndexContent)).Methods("GET")
-	v2.HandleFunc("/content", jwtAuthentication(createContent)).Methods("POST")
-	v2.HandleFunc("/content/{id}", jwtAuthentication(getSingleContent)).Methods("GET")
-	v2.HandleFunc("/content/{id}", jwtAuthentication(updateContent)).Methods("PUT")
-	v2.HandleFunc("/content/{id}", jwtAuthentication(deleteContent)).Methods("DELETE")
+	v2.HandleFunc("/content", jwtAuth(getIndexContent)).Methods("GET")
+	v2.HandleFunc("/content", jwtAuth(createContent)).Methods("POST")
+	v2.HandleFunc("/content/{id}", jwtAuth(getSingleContent)).Methods("GET")
+	v2.HandleFunc("/content/{id}", jwtAuth(updateContent)).Methods("PUT")
+	v2.HandleFunc("/content/{id}", jwtAuth(deleteContent)).Methods("DELETE")
 	v2.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
