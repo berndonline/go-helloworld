@@ -132,7 +132,7 @@ func main() {
 			return
 		}
 	}()
-	// main request router to expose default handlers and rest-api verions
+	// main request router to expose default handlers and rest-api versions on port TCP 8080 (default)
 	log.Printf("helloworld: listening on port %s", httpPort)
 	err := http.ListenAndServe(fmt.Sprintf(":%s", httpPort), router)
 	if err != nil {
