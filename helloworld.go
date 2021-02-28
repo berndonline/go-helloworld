@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 )
+
 // default variables and data access object
 var (
 	response    = os.Getenv("RESPONSE")
@@ -24,6 +25,7 @@ var (
 	dao         = contentsDAO{}
 	db          *mgo.Database
 )
+
 // init function to popluate variables or initiate mongodb connection if enabled
 func init() {
 	if response == "" {
@@ -54,12 +56,14 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
 }
+
 // http health check function to use with deployments readiness probe
 func healthz(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	io.WriteString(w, `{"alive": true}`)
 }
+
 // function to get IP address from http header - example below for custom CloudFlare X-Forwarder-For header
 func getIPAddress(r *http.Request) string {
 	var ip string
@@ -71,7 +75,7 @@ func getIPAddress(r *http.Request) string {
 func main() {
 	// application version displayed in prometheus
 	version.Set(0.1)
-  // prometheus registry filtering the exported metrics
+	// prometheus registry filtering the exported metrics
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(httpRequestDuration)
 	registry.MustRegister(httpRequestsTotal)
@@ -81,17 +85,17 @@ func main() {
 	registry.MustRegister(version)
 
 	log.Print("helloworld: is starting...")
-  // http request router for /metrics path to be not exposed through main root path
+	// http request router for /metrics path to be not exposed through main root path
 	routerInternal := mux.NewRouter().StrictSlash(true)
 	routerInternal.Path("/metrics").Handler(promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 	// main request router for rest-api
 	router := mux.NewRouter().StrictSlash(true)
 	// prometheus middleware handlers to capture application metrics
 	router.Use(InstrumentHandler)
-  // default response and health check handler
+	// default response and health check handler
 	router.HandleFunc("/", handler)
 	router.HandleFunc("/healthz", healthz)
-  // rest-api root path defined as subrouter
+	// rest-api root path defined as subrouter
 	var api = router.PathPrefix("/api").Subrouter()
 	api.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
@@ -109,7 +113,7 @@ func main() {
 	// version 2 of the rest-api using json web token (JWT) authentication
 	var v2 = api.PathPrefix("/v2").Subrouter()
 	v2.HandleFunc("/login", jwtLogin).Methods("POST")
-  v2.HandleFunc("/logout", jwtLogout).Methods("POST")
+	v2.HandleFunc("/logout", jwtLogout).Methods("POST")
 	v2.HandleFunc("/refresh", jwtAuth(jwtRefresh)).Methods("POST")
 	v2.HandleFunc("/content/", jwtAuth(getIndexContent)).Methods("GET")
 	v2.HandleFunc("/content/", jwtAuth(createContent)).Methods("POST")
@@ -128,7 +132,7 @@ func main() {
 			return
 		}
 	}()
-  // main request router to expose default handlers and rest-api verions
+	// main request router to expose default handlers and rest-api verions
 	log.Printf("helloworld: listening on port %s", httpPort)
 	err := http.ListenAndServe(fmt.Sprintf(":%s", httpPort), router)
 	if err != nil {
