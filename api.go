@@ -33,19 +33,20 @@ var contents = allContent{
 }
 
 func getIndexContent(w http.ResponseWriter, r *http.Request) {
-	if mongodb != false {
 
+	if mongodb != false {
 		contents, err := dao.FindAll()
 		if err != nil {
 			respondWithError(w, http.StatusInternalServerError, err.Error())
 			log.Print("helloworld-api: getIndexContent failed")
 			return
 		}
+		go TracingExtract(r, "getIndexContent-mgoApi")
 		log.Print("helloworld-api: getIndexContent received a request - " + getIPAddress(r))
 		respondWithJson(w, http.StatusOK, contents)
 
 	} else {
-
+    go TracingExtract(r, "getIndexContent")
 		log.Print("helloworld-api: getIndexContent received a request - " + getIPAddress(r))
 		respondWithJson(w, http.StatusOK, contents)
 	}
@@ -53,21 +54,21 @@ func getIndexContent(w http.ResponseWriter, r *http.Request) {
 
 func getSingleContent(w http.ResponseWriter, r *http.Request) {
 	if mongodb != false {
-
 		contentID, err := dao.FindById(mux.Vars(r)["id"])
 		if err != nil {
 			respondWithError(w, http.StatusNotFound, "Invalid ID")
 			log.Print("helloworld-api: getSingleContent invalid")
 			return
 		}
+		go TracingExtract(r, "getSingleContent-mgoApi")
 		log.Print("helloworld-api: getSingleContent received a request - " + getIPAddress(r))
 		respondWithJson(w, http.StatusOK, contentID)
 
 	} else {
-
 		contentID := mux.Vars(r)["id"]
 		for _, singleContent := range contents {
 			if singleContent.ID == contentID {
+				go TracingExtract(r, "getSingleContent")
 				log.Print("helloworld-api: getSingleContent received a request - " + getIPAddress(r))
 				respondWithJson(w, http.StatusOK, singleContent)
 				return
@@ -94,6 +95,7 @@ func createContent(w http.ResponseWriter, r *http.Request) {
 			log.Print("helloworld-api: createContent failed")
 			return
 		}
+		go TracingExtract(r, "createContent-mgoApi")
 		respondWithJson(w, http.StatusCreated, newContent)
 		log.Print("helloworld-api: createContent received a request - " + getIPAddress(r))
 
@@ -108,6 +110,7 @@ func createContent(w http.ResponseWriter, r *http.Request) {
 		}
 		json.Unmarshal(reqBody, &newContent)
 		contents = append(contents, newContent)
+		go TracingExtract(r, "createContent")
 		log.Print("helloworld-api: createContent received a request - " + getIPAddress(r))
 		respondWithJson(w, http.StatusCreated, newContent)
 	}
@@ -129,6 +132,7 @@ func updateContent(w http.ResponseWriter, r *http.Request) {
 			log.Print("helloworld-api: updateContent failed")
 			return
 		}
+		go TracingExtract(r, "updateContent-mgoApi")
 		respondWithJson(w, http.StatusOK, map[string]string{"result": "success"})
 		log.Print("helloworld-api: updateContent received a request - " + getIPAddress(r))
 
@@ -150,6 +154,7 @@ func updateContent(w http.ResponseWriter, r *http.Request) {
 				respondWithJson(w, http.StatusOK, singleContent)
 			}
 		}
+		go TracingExtract(r, "updateContent")
 		log.Print("helloworld-api: updateContent received a request - " + getIPAddress(r))
 	}
 }
@@ -168,6 +173,7 @@ func deleteContent(w http.ResponseWriter, r *http.Request) {
 			log.Print("helloworld-api: deleteContent failed")
 			return
 		}
+		go TracingExtract(r, "deleteContent-mgoApi")
 		respondWithJson(w, http.StatusOK, map[string]string{"result": "success"})
 		log.Print("helloworld-api: deleteContent received a request - " + getIPAddress(r))
 
@@ -177,6 +183,7 @@ func deleteContent(w http.ResponseWriter, r *http.Request) {
 		for i, singleContent := range contents {
 			if singleContent.ID == contentID {
 				contents = append(contents[:i], contents[i+1:]...)
+				go TracingExtract(r, "deleteContent")
 				log.Print("helloworld-api: deleteContent received a request - " + getIPAddress(r))
 				respondWithJson(w, http.StatusOK, "The content with has been deleted successfully")
 			}

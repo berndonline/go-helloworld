@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/mux"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/uber/jaeger-lib/metrics"
 	mgo "gopkg.in/mgo.v2"
 	"io"
 	"log"
@@ -12,6 +14,9 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"github.com/uber/jaeger-client-go"
+	jaegercfg "github.com/uber/jaeger-client-go/config"
+	jaegerlog "github.com/uber/jaeger-client-go/log"
 )
 
 // default variables and data access object
@@ -24,6 +29,7 @@ var (
 	database    = os.Getenv("DATABASE")
 	dao         = contentsDAO{}
 	db          *mgo.Database
+	ctx         string
 )
 
 // init function to popluate variables or initiate mongodb connection if enabled
@@ -73,6 +79,31 @@ func getIPAddress(r *http.Request) string {
 }
 
 func main() {
+
+	cfg := jaegercfg.Configuration{
+		ServiceName: "helloworld",
+		Sampler: &jaegercfg.SamplerConfig{
+			Type:  jaeger.SamplerTypeConst,
+			Param: 1,
+		},
+		Reporter: &jaegercfg.ReporterConfig{
+			LogSpans: true,
+		},
+	}
+	jLogger := jaegerlog.StdLogger
+	jMetricsFactory := metrics.NullFactory
+
+	// Initialize tracer with a logger and a metrics factory
+	tracer, closer, err := cfg.NewTracer(
+		jaegercfg.Logger(jLogger),
+		jaegercfg.Metrics(jMetricsFactory),
+	)
+	if err != nil {
+		log.Fatal("cannot initialize Jaeger Tracer", err)
+	}
+	// Set the singleton opentracing.Tracer with the Jaeger tracer.
+	opentracing.SetGlobalTracer(tracer)
+	defer closer.Close()
 	// application version displayed in prometheus
 	version.Set(0.1)
 	// prometheus registry filtering the exported metrics
@@ -92,6 +123,8 @@ func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	// prometheus middleware handlers to capture application metrics
 	router.Use(InstrumentHandler)
+	// load open tracing into all route handler
+	router.Use(TracingHandler)
 	// default response and health check handler
 	router.HandleFunc("/", handler)
 	router.HandleFunc("/healthz", healthz)
@@ -123,19 +156,23 @@ func main() {
 	v2.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
+	// load open tracing into all route handler
+	// _ = router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
+	// 	route.Handler(
+	// 		TracingHandler(route.GetHandler()))
+	// 	return nil
+	// })
 	// nested function to start /metrics request router on port TCP 9100 (default)
 	go func() {
 		log.Printf("helloworld: metrics listening on port %s", metricsPort)
-		err := http.ListenAndServe(fmt.Sprintf(":%s", metricsPort), routerInternal)
-		if err != nil {
+		if err := http.ListenAndServe(fmt.Sprintf(":%s", metricsPort), routerInternal); err != nil {
 			log.Fatal("error starting metrics http server : ", err)
 			return
 		}
 	}()
 	// main request router to expose default handlers and rest-api versions on port TCP 8080 (default)
 	log.Printf("helloworld: listening on port %s", httpPort)
-	err := http.ListenAndServe(fmt.Sprintf(":%s", httpPort), router)
-	if err != nil {
+	if err := http.ListenAndServe(fmt.Sprintf(":%s", httpPort), router); err != nil {
 		log.Fatal("error starting http server : ", err)
 		return
 	}
