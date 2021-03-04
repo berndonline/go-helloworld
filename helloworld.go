@@ -6,6 +6,9 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/uber/jaeger-client-go"
+	jaegercfg "github.com/uber/jaeger-client-go/config"
+	jaegerlog "github.com/uber/jaeger-client-go/log"
 	"github.com/uber/jaeger-lib/metrics"
 	mgo "gopkg.in/mgo.v2"
 	"io"
@@ -14,9 +17,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"github.com/uber/jaeger-client-go"
-	jaegercfg "github.com/uber/jaeger-client-go/config"
-	jaegerlog "github.com/uber/jaeger-client-go/log"
 )
 
 // default variables and data access object
@@ -123,8 +123,6 @@ func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	// prometheus middleware handlers to capture application metrics
 	router.Use(InstrumentHandler)
-	// load open tracing into all route handler
-	router.Use(TracingHandler)
 	// default response and health check handler
 	router.HandleFunc("/", handler)
 	router.HandleFunc("/healthz", healthz)
@@ -156,12 +154,6 @@ func main() {
 	v2.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
-	// load open tracing into all route handler
-	// _ = router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
-	// 	route.Handler(
-	// 		TracingHandler(route.GetHandler()))
-	// 	return nil
-	// })
 	// nested function to start /metrics request router on port TCP 9100 (default)
 	go func() {
 		log.Printf("helloworld: metrics listening on port %s", metricsPort)

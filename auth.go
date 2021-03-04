@@ -4,8 +4,12 @@ import (
 	"crypto/subtle"
 	"encoding/json"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/mux"
+	opentracing "github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -28,6 +32,19 @@ type Claims struct {
 
 func basicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// getting infos for open tracing
+		delegate := &responseWriterDelegator{ResponseWriter: w}
+		route := mux.CurrentRoute(r)
+		path, _ := route.GetPathTemplate()
+		method := strings.ToLower(r.Method)
+		code := uint16(delegate.status)
+
+    // start tracer
+		tracer := opentracing.GlobalTracer()
+		spanCtx, _ := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+		span := tracer.StartSpan("(basicAuth) "+path, ext.RPCServerOption(spanCtx))
+
+    // basicAuth
 		user, pass, ok := r.BasicAuth()
 		expectedPassword := users[user]
 		if !ok || subtle.ConstantTimeCompare([]byte(pass),
@@ -38,6 +55,14 @@ func basicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 			log.Print("helloworld-api: authentication failed - " + getIPAddress(r))
 			return
 		}
+    // stop tracer and inject http infos
+		defer span.Finish()
+		ext.HTTPMethod.Set(span, method)
+		ext.HTTPStatusCode.Set(span, code)
+		ext.PeerHostIPv4.SetString(span, getIPAddress(r))
+		// inject tracer into context
+		tracer.Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+
 		handler(w, r)
 	}
 }
@@ -81,6 +106,16 @@ func jwtLogin(w http.ResponseWriter, r *http.Request) {
 
 func jwtAuth(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		delegate := &responseWriterDelegator{ResponseWriter: w}
+		route := mux.CurrentRoute(r)
+		path, _ := route.GetPathTemplate()
+		method := strings.ToLower(r.Method)
+		code := uint16(delegate.status)
+
+		tracer := opentracing.GlobalTracer()
+		spanCtx, _ := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
+		span := tracer.StartSpan("(jwtAuth) "+path, ext.RPCServerOption(spanCtx))
+
 		c, err := r.Cookie("token")
 		if err != nil {
 			if err == http.ErrNoCookie {
@@ -108,6 +143,12 @@ func jwtAuth(handler http.HandlerFunc) http.HandlerFunc {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
+
+		defer span.Finish()
+		ext.HTTPMethod.Set(span, method)
+		ext.HTTPStatusCode.Set(span, code)
+		ext.PeerHostIPv4.SetString(span, getIPAddress(r))
+		tracer.Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
 
 		handler(w, r)
 	}
