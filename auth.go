@@ -39,12 +39,12 @@ func basicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 		method := strings.ToLower(r.Method)
 		code := uint16(delegate.status)
 
-    // start tracer
+		// start tracer
 		tracer := opentracing.GlobalTracer()
 		spanCtx, _ := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
 		span := tracer.StartSpan("(basicAuth) "+path, ext.RPCServerOption(spanCtx))
 
-    // basicAuth
+		// basicAuth
 		user, pass, ok := r.BasicAuth()
 		expectedPassword := users[user]
 		if !ok || subtle.ConstantTimeCompare([]byte(pass),
@@ -55,7 +55,7 @@ func basicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 			log.Print("helloworld-api: authentication failed - " + getIPAddress(r))
 			return
 		}
-    // stop tracer and inject http infos
+		// stop tracer and inject http infos
 		defer span.Finish()
 		ext.HTTPMethod.Set(span, method)
 		ext.HTTPStatusCode.Set(span, code)

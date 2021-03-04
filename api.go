@@ -43,8 +43,8 @@ func getIndexContent(w http.ResponseWriter, r *http.Request) {
 	if mongodb != false {
 		childSpan := opentracing.GlobalTracer().StartSpan("mongodb", opentracing.ChildOf(span.Context()))
 		contents, err := dao.FindAll()
-    defer childSpan.Finish()
-    subchildSpan := opentracing.GlobalTracer().StartSpan("http.response", opentracing.ChildOf(childSpan.Context()))
+		defer childSpan.Finish()
+		subchildSpan := opentracing.GlobalTracer().StartSpan("http.response", opentracing.ChildOf(childSpan.Context()))
 
 		if err != nil {
 			respondWithError(w, http.StatusInternalServerError, err.Error())
@@ -121,7 +121,7 @@ func createContent(w http.ResponseWriter, r *http.Request) {
 
 	if mongodb != false {
 
-    childSpan := opentracing.GlobalTracer().StartSpan("mongodb", opentracing.ChildOf(span.Context()))
+		childSpan := opentracing.GlobalTracer().StartSpan("mongodb", opentracing.ChildOf(span.Context()))
 		defer r.Body.Close()
 		var newContent mgoApi
 
@@ -146,7 +146,7 @@ func createContent(w http.ResponseWriter, r *http.Request) {
 
 	} else {
 
-    childSpan := opentracing.GlobalTracer().StartSpan("addedContent", opentracing.ChildOf(span.Context()))
+		childSpan := opentracing.GlobalTracer().StartSpan("addedContent", opentracing.ChildOf(span.Context()))
 		defer r.Body.Close()
 		var newContent api
 		reqBody, err := ioutil.ReadAll(r.Body)
@@ -167,7 +167,6 @@ func createContent(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateContent(w http.ResponseWriter, r *http.Request) {
-
 
 	if mongodb != false {
 
