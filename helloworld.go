@@ -104,12 +104,12 @@ func main() {
 	// default response and health handler
 	router.HandleFunc("/", handler)
 	router.HandleFunc("/healthz", healthz)
-	// rest-api root path defined as subrouter
+	// api root path defined as subrouter
 	var api = router.PathPrefix("/api").Subrouter()
 	api.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
-	// version 1 of the rest-api using basicAuth
+	// version 1 of the api using basicAuth
 	var v1 = api.PathPrefix("/v1").Subrouter()
 	v1.Handle("/content/", tracingHandler(basicAuth(getIndexContent, "Please enter your username and password"))).Methods("GET")
 	v1.Handle("/content/", tracingHandler(basicAuth(createContent, "Please enter your username and password"))).Methods("POST")
@@ -119,7 +119,7 @@ func main() {
 	v1.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
-	// version 2 of the rest-api using json web token (JWT) authentication
+	// version 2 of the api using json web token (JWT) authentication
 	var v2 = api.PathPrefix("/v2").Subrouter()
 	v2.HandleFunc("/login", jwtLogin).Methods("POST")
 	v2.HandleFunc("/logout", jwtLogout).Methods("POST")
@@ -132,7 +132,7 @@ func main() {
 	v2.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
-	// nested function to start /metrics request router on port TCP 9100 (default)
+	// function to start /metrics request router on port TCP 9100 (default)
 	go func() {
 		log.Printf("helloworld: metrics listening on port %s", metricsPort)
 		if err := http.ListenAndServe(fmt.Sprintf(":%s", metricsPort), routerInternal); err != nil {
@@ -140,7 +140,7 @@ func main() {
 			return
 		}
 	}()
-	// main request router to expose default handlers and rest-api versions on port TCP 8080 (default)
+	// main request router to expose default handlers and api versions on port TCP 8080 (default)
 	log.Printf("helloworld: listening on port %s", httpPort)
 	if err := http.ListenAndServe(fmt.Sprintf(":%s", httpPort), router); err != nil {
 		log.Fatal("error starting http server : ", err)
