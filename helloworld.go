@@ -29,11 +29,14 @@ var (
 	database    = os.Getenv("DATABASE")
 	dao         = contentsDAO{}
 	db          *mgo.Database
-	ctx         string
+	tracerName  string
 )
 
 // init function to popluate variables or initiate mongodb connection if enabled
 func init() {
+	if tracerName == "" {
+		tracerName = "helloworld"
+	}
 	if response == "" {
 		response = "Hello, World - REST API!"
 	}
@@ -44,6 +47,9 @@ func init() {
 		metricsPort = "9100"
 	}
 	if mongodb != false {
+		if tracerName == "helloworld" {
+			tracerName = "helloworld-mgo"
+		}
 		if server == "" {
 			server = "mongodb"
 		}
@@ -81,7 +87,7 @@ func getIPAddress(r *http.Request) string {
 func main() {
 
 	cfg := jaegercfg.Configuration{
-		ServiceName: "helloworld",
+		ServiceName: tracerName,
 		Sampler: &jaegercfg.SamplerConfig{
 			Type:  jaeger.SamplerTypeConst,
 			Param: 1,
