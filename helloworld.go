@@ -58,14 +58,14 @@ func init() {
 	}
 }
 
-// default http response handler function
+// default http response handler
 func handler(w http.ResponseWriter, r *http.Request) {
 	log.Print("helloworld: defaultHandler received a request - " + getIPAddress(r))
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
 }
 
-// http health check function to use with deployments readiness probe
+// http health handler to use with deployments readiness probe
 func healthz(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -101,7 +101,7 @@ func main() {
 	router := mux.NewRouter().StrictSlash(true)
 	// prometheus middleware handlers to capture application metrics
 	router.Use(InstrumentHandler)
-	// default response and health check handler
+	// default response and health handler
 	router.HandleFunc("/", handler)
 	router.HandleFunc("/healthz", healthz)
 	// rest-api root path defined as subrouter
