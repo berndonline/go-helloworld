@@ -29,27 +29,11 @@ var (
 	database    = os.Getenv("DATABASE")
 	dao         = contentsDAO{}
 	db          *mgo.Database
-	tracerName  string
 )
 
 // init function to popluate variables or initiate mongodb connection if enabled
 func init() {
-	if tracerName == "" {
-		tracerName = "helloworld"
-	}
-	if response == "" {
-		response = "Hello, World - REST API!"
-	}
-	if httpPort == "" {
-		httpPort = "8080"
-	}
-	if metricsPort == "" {
-		metricsPort = "9100"
-	}
 	if mongodb != false {
-		if tracerName == "helloworld" {
-			tracerName = "helloworld-mgo"
-		}
 		if server == "" {
 			server = "mongodb"
 		}
@@ -60,6 +44,40 @@ func init() {
 		dao.Database = database
 		dao.Connect()
 	}
+	if response == "" {
+		response = "Hello, World - REST API!"
+	}
+	if httpPort == "" {
+		httpPort = "8080"
+	}
+	if metricsPort == "" {
+		metricsPort = "9100"
+	}
+}
+
+// opentracing service configuration
+func initTracer(service string) (opentracing.Tracer, io.Closer) {
+	cfg := jaegercfg.Configuration{
+		ServiceName: service,
+		Sampler: &jaegercfg.SamplerConfig{
+			Type:  jaeger.SamplerTypeConst,
+			Param: 1,
+		},
+		Reporter: &jaegercfg.ReporterConfig{
+			LogSpans: true,
+		},
+	}
+	jLogger := jaegerlog.StdLogger
+	jMetricsFactory := metrics.NullFactory
+
+	tracer, closer, err := cfg.NewTracer(
+		jaegercfg.Logger(jLogger),
+		jaegercfg.Metrics(jMetricsFactory),
+	)
+	if err != nil {
+		log.Fatal("cannot initialize Jaeger Tracer", err)
+	}
+	return tracer, closer
 }
 
 // default http response handler function
@@ -85,33 +103,13 @@ func getIPAddress(r *http.Request) string {
 }
 
 func main() {
-
-	cfg := jaegercfg.Configuration{
-		ServiceName: tracerName,
-		Sampler: &jaegercfg.SamplerConfig{
-			Type:  jaeger.SamplerTypeConst,
-			Param: 1,
-		},
-		Reporter: &jaegercfg.ReporterConfig{
-			LogSpans: true,
-		},
-	}
-	jLogger := jaegerlog.StdLogger
-	jMetricsFactory := metrics.NullFactory
-
-	// Initialize tracer with a logger and a metrics factory
-	tracer, closer, err := cfg.NewTracer(
-		jaegercfg.Logger(jLogger),
-		jaegercfg.Metrics(jMetricsFactory),
-	)
-	if err != nil {
-		log.Fatal("cannot initialize Jaeger Tracer", err)
-	}
-	// Set the singleton opentracing.Tracer with the Jaeger tracer.
+  // initialize tracer and define servicename
+	tracer, closer := initTracer("helloworld")
 	opentracing.SetGlobalTracer(tracer)
-	defer closer.Close()
+  defer closer.Close()
 	// application version displayed in prometheus
 	version.Set(0.1)
+	log.Print("helloworld: is starting...")
 	// prometheus registry filtering the exported metrics
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(httpRequestDuration)
@@ -120,8 +118,6 @@ func main() {
 	registry.MustRegister(httpRequestSizeBytes)
 	registry.MustRegister(httpResponseSizeBytes)
 	registry.MustRegister(version)
-
-	log.Print("helloworld: is starting...")
 	// http request router for /metrics path to be not exposed through main root path
 	routerInternal := mux.NewRouter().StrictSlash(true)
 	routerInternal.Path("/metrics").Handler(promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
