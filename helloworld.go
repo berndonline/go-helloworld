@@ -6,10 +6,6 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/uber/jaeger-client-go"
-	jaegercfg "github.com/uber/jaeger-client-go/config"
-	jaegerlog "github.com/uber/jaeger-client-go/log"
-	"github.com/uber/jaeger-lib/metrics"
 	mgo "gopkg.in/mgo.v2"
 	"io"
 	"log"
@@ -60,31 +56,6 @@ func init() {
 	if metricsPort == "" {
 		metricsPort = "9100"
 	}
-}
-
-// opentracing service configuration
-func initTracer(service string) (opentracing.Tracer, io.Closer) {
-	cfg := jaegercfg.Configuration{
-		ServiceName: service,
-		Sampler: &jaegercfg.SamplerConfig{
-			Type:  jaeger.SamplerTypeConst,
-			Param: 1,
-		},
-		Reporter: &jaegercfg.ReporterConfig{
-			LogSpans: true,
-		},
-	}
-	jLogger := jaegerlog.StdLogger
-	jMetricsFactory := metrics.NullFactory
-
-	tracer, closer, err := cfg.NewTracer(
-		jaegercfg.Logger(jLogger),
-		jaegercfg.Metrics(jMetricsFactory),
-	)
-	if err != nil {
-		log.Fatal("helloworld: cannot initialize Jaeger Tracer", err)
-	}
-	return tracer, closer
 }
 
 // default http response handler function
@@ -140,11 +111,11 @@ func main() {
 	})
 	// version 1 of the rest-api using basicAuth
 	var v1 = api.PathPrefix("/v1").Subrouter()
-	v1.HandleFunc("/content/", basicAuth(getIndexContent, "Please enter your username and password")).Methods("GET")
-	v1.HandleFunc("/content/", basicAuth(createContent, "Please enter your username and password")).Methods("POST")
-	v1.HandleFunc("/content/{id}", basicAuth(getSingleContent, "Please enter your username and password")).Methods("GET")
-	v1.HandleFunc("/content/{id}", basicAuth(updateContent, "Please enter your username and password")).Methods("PUT")
-	v1.HandleFunc("/content/{id}", basicAuth(deleteContent, "Please enter your username and password")).Methods("DELETE")
+	v1.Handle("/content/", tracingHandler(basicAuth(getIndexContent, "Please enter your username and password"))).Methods("GET")
+	v1.Handle("/content/", tracingHandler(basicAuth(createContent, "Please enter your username and password"))).Methods("POST")
+	v1.Handle("/content/{id}", tracingHandler(basicAuth(getSingleContent, "Please enter your username and password"))).Methods("GET")
+	v1.Handle("/content/{id}", tracingHandler(basicAuth(updateContent, "Please enter your username and password"))).Methods("PUT")
+	v1.Handle("/content/{id}", tracingHandler(basicAuth(deleteContent, "Please enter your username and password"))).Methods("DELETE")
 	v1.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
@@ -153,11 +124,11 @@ func main() {
 	v2.HandleFunc("/login", jwtLogin).Methods("POST")
 	v2.HandleFunc("/logout", jwtLogout).Methods("POST")
 	v2.HandleFunc("/refresh", jwtAuth(jwtRefresh)).Methods("POST")
-	v2.HandleFunc("/content/", jwtAuth(getIndexContent)).Methods("GET")
-	v2.HandleFunc("/content/", jwtAuth(createContent)).Methods("POST")
-	v2.HandleFunc("/content/{id}", jwtAuth(getSingleContent)).Methods("GET")
-	v2.HandleFunc("/content/{id}", jwtAuth(updateContent)).Methods("PUT")
-	v2.HandleFunc("/content/{id}", jwtAuth(deleteContent)).Methods("DELETE")
+	v2.Handle("/content/", tracingHandler(jwtAuth(getIndexContent))).Methods("GET")
+	v2.Handle("/content/", tracingHandler(jwtAuth(createContent))).Methods("POST")
+	v2.Handle("/content/{id}", tracingHandler(jwtAuth(getSingleContent))).Methods("GET")
+	v2.Handle("/content/{id}", tracingHandler(jwtAuth(updateContent))).Methods("PUT")
+	v2.Handle("/content/{id}", tracingHandler(jwtAuth(deleteContent))).Methods("DELETE")
 	v2.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
