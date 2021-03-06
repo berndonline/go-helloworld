@@ -111,11 +111,11 @@ func main() {
 	})
 	// version 1 of the api using basicAuth
 	var v1 = api.PathPrefix("/v1").Subrouter()
-	v1.Handle("/content/", tracingHandler(basicAuth(getIndexContent, "Please enter your username and password"))).Methods("GET")
-	v1.Handle("/content/", tracingHandler(basicAuth(createContent, "Please enter your username and password"))).Methods("POST")
-	v1.Handle("/content/{id}", tracingHandler(basicAuth(getSingleContent, "Please enter your username and password"))).Methods("GET")
-	v1.Handle("/content/{id}", tracingHandler(basicAuth(updateContent, "Please enter your username and password"))).Methods("PUT")
-	v1.Handle("/content/{id}", tracingHandler(basicAuth(deleteContent, "Please enter your username and password"))).Methods("DELETE")
+	v1.Handle("/content/", tracingHandler(basicAuth(getIndexContent))).Methods("GET")
+	v1.Handle("/content/", tracingHandler(basicAuth(createContent))).Methods("POST")
+	v1.Handle("/content/{id}", tracingHandler(basicAuth(getSingleContent))).Methods("GET")
+	v1.Handle("/content/{id}", tracingHandler(basicAuth(updateContent))).Methods("PUT")
+	v1.Handle("/content/{id}", tracingHandler(basicAuth(deleteContent))).Methods("DELETE")
 	v1.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})

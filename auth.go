@@ -28,7 +28,7 @@ type Claims struct {
 	jwt.StandardClaims
 }
 
-func basicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
+func basicAuth(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get root span from context
 		tracer := opentracing.GlobalTracer()
@@ -39,7 +39,7 @@ func basicAuth(handler http.HandlerFunc, realm string) http.HandlerFunc {
 		expectedPassword := users[user]
 		if !ok || subtle.ConstantTimeCompare([]byte(pass),
 			[]byte(expectedPassword)) != 1 {
-			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
+			w.Header().Set("WWW-Authenticate", `Basic realm="`+`Please enter your username and password`+`"`)
 			w.WriteHeader(401)
 			w.Write([]byte("You are Unauthorized to access the application.\n"))
 			log.Print("helloworld-api: authentication failed - " + getIPAddress(r))
