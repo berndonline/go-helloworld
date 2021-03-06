@@ -35,9 +35,9 @@ func basicAuth(handler http.HandlerFunc) http.HandlerFunc {
 		spanCtx, _ := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
 		span := tracer.StartSpan("basicAuth", ext.RPCServerOption(spanCtx))
 		// basicAuth function
+	  realm := "Please enter your username and password"
 		user, pass, ok := r.BasicAuth()
 		expectedPassword := users[user]
-		realm := "Please enter your username and password"
 		if !ok || subtle.ConstantTimeCompare([]byte(pass),
 			[]byte(expectedPassword)) != 1 {
 			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
