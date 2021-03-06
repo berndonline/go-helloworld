@@ -34,7 +34,7 @@ func initTracer(service string) (opentracing.Tracer, io.Closer) {
 		jaegercfg.Metrics(jMetricsFactory),
 	)
 	if err != nil {
-		log.Fatal(service + ": cannot initialize Jaeger Tracer", err)
+		log.Fatal(service+": cannot initialize Jaeger Tracer", err)
 	}
 	return tracer, closer
 }

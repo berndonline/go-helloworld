@@ -103,7 +103,7 @@ func jwtAuth(handler http.HandlerFunc) http.HandlerFunc {
 		if err != nil {
 			if err == http.ErrNoCookie {
 				w.WriteHeader(http.StatusUnauthorized)
-			  defer span.Finish()
+				defer span.Finish()
 				return
 			}
 			w.WriteHeader(http.StatusBadRequest)
