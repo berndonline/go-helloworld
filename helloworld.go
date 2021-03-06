@@ -3,8 +3,13 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/mux"
+	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/uber/jaeger-client-go"
+	jaegercfg "github.com/uber/jaeger-client-go/config"
+	jaegerlog "github.com/uber/jaeger-client-go/log"
+	"github.com/uber/jaeger-lib/metrics"
 	mgo "gopkg.in/mgo.v2"
 	"io"
 	"log"
@@ -16,6 +21,7 @@ import (
 
 // default variables and data access object
 var (
+	serviceName string
 	response    = os.Getenv("RESPONSE")
 	httpPort    = os.Getenv("PORT")
 	metricsPort = os.Getenv("METRICSPORT")
@@ -28,16 +34,10 @@ var (
 
 // init function to popluate variables or initiate mongodb connection if enabled
 func init() {
-	if response == "" {
-		response = "Hello, World - REST API!"
-	}
-	if httpPort == "" {
-		httpPort = "8080"
-	}
-	if metricsPort == "" {
-		metricsPort = "9100"
-	}
 	if mongodb != false {
+		if serviceName == "" {
+			serviceName = "helloworld-mongodb"
+		}
 		if server == "" {
 			server = "mongodb"
 		}
@@ -48,6 +48,43 @@ func init() {
 		dao.Database = database
 		dao.Connect()
 	}
+	if serviceName == "" {
+		serviceName = "helloworld"
+	}
+	if response == "" {
+		response = "Hello, World - REST API!"
+	}
+	if httpPort == "" {
+		httpPort = "8080"
+	}
+	if metricsPort == "" {
+		metricsPort = "9100"
+	}
+}
+
+// opentracing service configuration
+func initTracer(service string) (opentracing.Tracer, io.Closer) {
+	cfg := jaegercfg.Configuration{
+		ServiceName: service,
+		Sampler: &jaegercfg.SamplerConfig{
+			Type:  jaeger.SamplerTypeConst,
+			Param: 1,
+		},
+		Reporter: &jaegercfg.ReporterConfig{
+			LogSpans: true,
+		},
+	}
+	jLogger := jaegerlog.StdLogger
+	jMetricsFactory := metrics.NullFactory
+
+	tracer, closer, err := cfg.NewTracer(
+		jaegercfg.Logger(jLogger),
+		jaegercfg.Metrics(jMetricsFactory),
+	)
+	if err != nil {
+		log.Fatal("helloworld: cannot initialize Jaeger Tracer", err)
+	}
+	return tracer, closer
 }
 
 // default http response handler function
@@ -66,15 +103,18 @@ func healthz(w http.ResponseWriter, r *http.Request) {
 
 // function to get IP address from http header - example below for custom CloudFlare X-Forwarder-For header
 func getIPAddress(r *http.Request) string {
-	var ip string
-	ip = r.Header.Get("CF-Connecting-IP")
-	ip = strings.TrimSpace(ip)
+	ip := strings.TrimSpace(r.Header.Get("CF-Connecting-IP"))
 	return ip
 }
 
 func main() {
+  // initialize tracer and servicename
+	tracer, closer := initTracer(serviceName)
+	opentracing.SetGlobalTracer(tracer)
+  defer closer.Close()
 	// application version displayed in prometheus
 	version.Set(0.1)
+	log.Print("helloworld: is starting...")
 	// prometheus registry filtering the exported metrics
 	registry := prometheus.NewRegistry()
 	registry.MustRegister(httpRequestDuration)
@@ -83,8 +123,6 @@ func main() {
 	registry.MustRegister(httpRequestSizeBytes)
 	registry.MustRegister(httpResponseSizeBytes)
 	registry.MustRegister(version)
-
-	log.Print("helloworld: is starting...")
 	// http request router for /metrics path to be not exposed through main root path
 	routerInternal := mux.NewRouter().StrictSlash(true)
 	routerInternal.Path("/metrics").Handler(promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
@@ -126,16 +164,14 @@ func main() {
 	// nested function to start /metrics request router on port TCP 9100 (default)
 	go func() {
 		log.Printf("helloworld: metrics listening on port %s", metricsPort)
-		err := http.ListenAndServe(fmt.Sprintf(":%s", metricsPort), routerInternal)
-		if err != nil {
+		if err := http.ListenAndServe(fmt.Sprintf(":%s", metricsPort), routerInternal); err != nil {
 			log.Fatal("error starting metrics http server : ", err)
 			return
 		}
 	}()
 	// main request router to expose default handlers and rest-api versions on port TCP 8080 (default)
 	log.Printf("helloworld: listening on port %s", httpPort)
-	err := http.ListenAndServe(fmt.Sprintf(":%s", httpPort), router)
-	if err != nil {
+	if err := http.ListenAndServe(fmt.Sprintf(":%s", httpPort), router); err != nil {
 		log.Fatal("error starting http server : ", err)
 		return
 	}
