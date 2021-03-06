@@ -108,10 +108,10 @@ func getIPAddress(r *http.Request) string {
 }
 
 func main() {
-  // initialize tracer and servicename
+	// initialize tracer and servicename
 	tracer, closer := initTracer(serviceName)
 	opentracing.SetGlobalTracer(tracer)
-  defer closer.Close()
+	defer closer.Close()
 	// application version displayed in prometheus
 	version.Set(0.1)
 	log.Print("helloworld: is starting...")

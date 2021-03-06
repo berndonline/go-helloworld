@@ -105,11 +105,11 @@ func jwtAuth(handler http.HandlerFunc) http.HandlerFunc {
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
 		method := strings.ToLower(r.Method)
-    // start root span
+		// start root span
 		tracer := opentracing.GlobalTracer()
 		spanCtx, _ := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
 		span := tracer.StartSpan("(jwtAuth) "+path, ext.RPCServerOption(spanCtx))
-    // json web token function
+		// json web token function
 		c, err := r.Cookie("token")
 		if err != nil {
 			if err == http.ErrNoCookie {
@@ -138,7 +138,7 @@ func jwtAuth(handler http.HandlerFunc) http.HandlerFunc {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
-    // stop tracer and inject http infos
+		// stop tracer and inject http infos
 		defer span.Finish()
 		ext.HTTPMethod.Set(span, method)
 		ext.PeerHostIPv4.SetString(span, getIPAddress(r))
