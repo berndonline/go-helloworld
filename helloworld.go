@@ -36,7 +36,7 @@ var (
 func init() {
 	if mongodb != false {
 		if serviceName == "" {
-			serviceName = "helloworld-mongodb-rest"
+			serviceName = "helloworld-mongodb"
 		}
 		if server == "" {
 			server = "mongodb"
@@ -49,7 +49,7 @@ func init() {
 		dao.Connect()
 	}
 	if serviceName == "" {
-		serviceName = "helloworld-rest"
+		serviceName = "helloworld"
 	}
 	if response == "" {
 		response = "Hello, World - REST API!"
@@ -82,7 +82,7 @@ func initTracer(service string) (opentracing.Tracer, io.Closer) {
 		jaegercfg.Metrics(jMetricsFactory),
 	)
 	if err != nil {
-		log.Fatal("cannot initialize Jaeger Tracer", err)
+		log.Fatal("helloworld: cannot initialize Jaeger Tracer", err)
 	}
 	return tracer, closer
 }
@@ -103,9 +103,7 @@ func healthz(w http.ResponseWriter, r *http.Request) {
 
 // function to get IP address from http header - example below for custom CloudFlare X-Forwarder-For header
 func getIPAddress(r *http.Request) string {
-	var ip string
-	ip = r.Header.Get("CF-Connecting-IP")
-	ip = strings.TrimSpace(ip)
+	ip := strings.TrimSpace(r.Header.Get("CF-Connecting-IP"))
 	return ip
 }
 
