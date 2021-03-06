@@ -37,9 +37,10 @@ func basicAuth(handler http.HandlerFunc) http.HandlerFunc {
 		// basicAuth function
 		user, pass, ok := r.BasicAuth()
 		expectedPassword := users[user]
+		realm := "Please enter your username and password"
 		if !ok || subtle.ConstantTimeCompare([]byte(pass),
 			[]byte(expectedPassword)) != 1 {
-			w.Header().Set("WWW-Authenticate", `Basic realm="`+`Please enter your username and password`+`"`)
+			w.Header().Set("WWW-Authenticate", `Basic realm="`+realm+`"`)
 			w.WriteHeader(401)
 			w.Write([]byte("You are Unauthorized to access the application.\n"))
 			log.Print("helloworld-api: authentication failed - " + getIPAddress(r))

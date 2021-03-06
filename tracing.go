@@ -55,7 +55,7 @@ func tracingHandler(handler http.HandlerFunc) http.HandlerFunc {
 		ext.HTTPMethod.Set(span, method)
 		ext.PeerHostIPv4.SetString(span, getIPAddress(r))
 		tracer.Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-		
+
 		handler(w, r)
 	}
 }
