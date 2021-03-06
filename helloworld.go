@@ -21,6 +21,7 @@ import (
 
 // default variables and data access object
 var (
+	serviceName string
 	response    = os.Getenv("RESPONSE")
 	httpPort    = os.Getenv("PORT")
 	metricsPort = os.Getenv("METRICSPORT")
@@ -34,6 +35,9 @@ var (
 // init function to popluate variables or initiate mongodb connection if enabled
 func init() {
 	if mongodb != false {
+		if serviceName == "" {
+			serviceName = "helloworld-mongodb-rest"
+		}
 		if server == "" {
 			server = "mongodb"
 		}
@@ -43,6 +47,9 @@ func init() {
 		dao.Server = server
 		dao.Database = database
 		dao.Connect()
+	}
+	if serviceName == "" {
+		serviceName = "helloworld-rest"
 	}
 	if response == "" {
 		response = "Hello, World - REST API!"
@@ -103,8 +110,8 @@ func getIPAddress(r *http.Request) string {
 }
 
 func main() {
-  // initialize tracer and define servicename
-	tracer, closer := initTracer("helloworld")
+  // initialize tracer and servicename
+	tracer, closer := initTracer(serviceName)
 	opentracing.SetGlobalTracer(tracer)
   defer closer.Close()
 	// application version displayed in prometheus

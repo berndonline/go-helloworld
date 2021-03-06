@@ -51,11 +51,10 @@ func InstrumentHandler(next http.Handler) http.Handler {
 		delegate := &responseWriterDelegator{ResponseWriter: w}
 		rw := delegate
 
-		next.ServeHTTP(rw, r) // call original
+		next.ServeHTTP(rw, r)
 
 		route := mux.CurrentRoute(r)
 		path, _ := route.GetPathTemplate()
-
 		code := strconv.Itoa(delegate.status)
 		method := strings.ToLower(r.Method)
 
