@@ -41,7 +41,7 @@ func getIndexContent(w http.ResponseWriter, r *http.Request) {
 	span := tracer.StartSpan("getIndexContent", ext.RPCServerOption(spanCtx))
 
 	if mongodb != false {
-		childSpan := opentracing.GlobalTracer().StartSpan("mongodb", opentracing.ChildOf(span.Context()))
+		childSpan := opentracing.GlobalTracer().StartSpan("mongodb-getIndex", opentracing.ChildOf(span.Context()))
 		contents, err := dao.FindAll()
 		defer childSpan.Finish()
 		subchildSpan := opentracing.GlobalTracer().StartSpan("http.response", opentracing.ChildOf(childSpan.Context()))
@@ -75,7 +75,7 @@ func getSingleContent(w http.ResponseWriter, r *http.Request) {
 	span := tracer.StartSpan("getSingleContent", ext.RPCServerOption(spanCtx))
 
 	if mongodb != false {
-		childSpan := opentracing.GlobalTracer().StartSpan("mongodb", opentracing.ChildOf(span.Context()))
+		childSpan := opentracing.GlobalTracer().StartSpan("mongodb-getSingle", opentracing.ChildOf(span.Context()))
 		contentID, err := dao.FindById(mux.Vars(r)["id"])
 		defer childSpan.Finish()
 		subchildSpan := opentracing.GlobalTracer().StartSpan("http.response", opentracing.ChildOf(childSpan.Context()))
@@ -121,7 +121,7 @@ func createContent(w http.ResponseWriter, r *http.Request) {
 
 	if mongodb != false {
 
-		childSpan := opentracing.GlobalTracer().StartSpan("mongodb", opentracing.ChildOf(span.Context()))
+		childSpan := opentracing.GlobalTracer().StartSpan("mongodb-create", opentracing.ChildOf(span.Context()))
 		defer r.Body.Close()
 		var newContent mgoApi
 
