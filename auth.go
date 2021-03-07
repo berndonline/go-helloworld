@@ -47,7 +47,7 @@ func basicAuth(handler http.HandlerFunc) http.HandlerFunc {
 			defer span.Finish()
 			return
 		}
-		log.Print("helloworld: "+user+" login successfully - "  + getIPAddress(r))
+		log.Print("helloworld: " + user + " login successfully - " + getIPAddress(r))
 		// stop tracer and inject http infos
 		defer span.Finish()
 		// inject tracer into context
@@ -91,7 +91,7 @@ func jwtLogin(w http.ResponseWriter, r *http.Request) {
 		Value:   tokenString,
 		Expires: expirationTime,
 	})
-	log.Print("helloworld: "+creds.Username+" login successfully - "  + getIPAddress(r))
+	log.Print("helloworld: " + creds.Username + " login successfully - " + getIPAddress(r))
 	w.Write([]byte("Token issued.\n"))
 }
 
