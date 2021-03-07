@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/gorilla/mux"
+	    "github.com/gorilla/handlers"
 	opentracing "github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -140,9 +141,11 @@ func main() {
 			return
 		}
 	}()
+	// enable mux request logging handler for default router
+	loggingRouter := handlers.CombinedLoggingHandler(os.Stdout, router)
 	// main request router to expose default handlers and api versions on port TCP 8080 (default)
 	log.Printf("helloworld: listening on port %s", httpPort)
-	if err := http.ListenAndServe(fmt.Sprintf(":%s", httpPort), router); err != nil {
+	if err := http.ListenAndServe(fmt.Sprintf(":%s", httpPort), loggingRouter); err != nil {
 		log.Fatal("error starting http server : ", err)
 		return
 	}
