@@ -16,6 +16,12 @@ import (
 	"strings"
 )
 
+// all constant variables
+const (
+	contentRoot = "/content/"
+	contentID   = "/content/{id}"
+)
+
 // default variables and data access object
 var (
 	serviceName string
@@ -105,6 +111,13 @@ func main() {
 	// default response and health handler
 	router.HandleFunc("/", handler)
 	router.HandleFunc("/healthz", healthz)
+	// enable reverse proxy config
+	for _, conf := range configuration {
+		proxy := generateProxy(conf)
+		router.HandleFunc(conf.Path, func(w http.ResponseWriter, r *http.Request) {
+			proxy.ServeHTTP(w, r)
+		})
+	}
 	// api root path defined as subrouter
 	var api = router.PathPrefix("/api").Subrouter()
 	api.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -112,11 +125,11 @@ func main() {
 	})
 	// version 1 of the api using basicAuth
 	var v1 = api.PathPrefix("/v1").Subrouter()
-	v1.Handle("/content/", tracingHandler(basicAuth(getIndexContent))).Methods("GET")
-	v1.Handle("/content/", tracingHandler(basicAuth(createContent))).Methods("POST")
-	v1.Handle("/content/{id}", tracingHandler(basicAuth(getSingleContent))).Methods("GET")
-	v1.Handle("/content/{id}", tracingHandler(basicAuth(updateContent))).Methods("PUT")
-	v1.Handle("/content/{id}", tracingHandler(basicAuth(deleteContent))).Methods("DELETE")
+	v1.Handle(contentRoot, tracingHandler(basicAuth(getIndexContent))).Methods("GET")
+	v1.Handle(contentRoot, tracingHandler(basicAuth(createContent))).Methods("POST")
+	v1.Handle(contentID, tracingHandler(basicAuth(getSingleContent))).Methods("GET")
+	v1.Handle(contentID, tracingHandler(basicAuth(updateContent))).Methods("PUT")
+	v1.Handle(contentID, tracingHandler(basicAuth(deleteContent))).Methods("DELETE")
 	v1.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
@@ -125,11 +138,11 @@ func main() {
 	v2.HandleFunc("/login", jwtLogin).Methods("POST")
 	v2.HandleFunc("/logout", jwtLogout).Methods("POST")
 	v2.HandleFunc("/refresh", jwtAuth(jwtRefresh)).Methods("POST")
-	v2.Handle("/content/", tracingHandler(jwtAuth(getIndexContent))).Methods("GET")
-	v2.Handle("/content/", tracingHandler(jwtAuth(createContent))).Methods("POST")
-	v2.Handle("/content/{id}", tracingHandler(jwtAuth(getSingleContent))).Methods("GET")
-	v2.Handle("/content/{id}", tracingHandler(jwtAuth(updateContent))).Methods("PUT")
-	v2.Handle("/content/{id}", tracingHandler(jwtAuth(deleteContent))).Methods("DELETE")
+	v2.Handle(contentRoot, tracingHandler(jwtAuth(getIndexContent))).Methods("GET")
+	v2.Handle(contentRoot, tracingHandler(jwtAuth(createContent))).Methods("POST")
+	v2.Handle(contentID, tracingHandler(jwtAuth(getSingleContent))).Methods("GET")
+	v2.Handle(contentID, tracingHandler(jwtAuth(updateContent))).Methods("PUT")
+	v2.Handle(contentID, tracingHandler(jwtAuth(deleteContent))).Methods("DELETE")
 	v2.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
