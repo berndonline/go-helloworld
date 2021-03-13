@@ -15,7 +15,7 @@ var (
 
 func Test_getContentIndex(t *testing.T) {
 	r := mux.NewRouter()
-	r.HandleFunc("/api/v1/content", basicAuth(getIndexContent, "Please enter your username and password")).Methods("GET")
+	r.HandleFunc("/api/v1/content", basicAuth(getIndexContent)).Methods("GET")
 	req, err := http.NewRequest("GET", "/api/v1/content", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -39,7 +39,7 @@ func Test_getContentIndex(t *testing.T) {
 
 func Test_getSingleContent(t *testing.T) {
 	r := mux.NewRouter()
-	r.HandleFunc("/api/v1/content/{id}", basicAuth(getSingleContent, "Please enter your username and password")).Methods("GET")
+	r.HandleFunc("/api/v1/content/{id}", basicAuth(getSingleContent)).Methods("GET")
 
 	t.Run("Find content 1", func(t *testing.T) {
 		req, err := http.NewRequest("GET", "/api/v1/content/1", nil)
@@ -106,7 +106,7 @@ func Test_CreateContent(t *testing.T) {
 	r := mux.NewRouter()
 
 	t.Run("Create content 3", func(t *testing.T) {
-		r.HandleFunc("/api/v1/content", basicAuth(createContent, "Please enter your username and password")).Methods("POST")
+		r.HandleFunc("/api/v1/content", basicAuth(createContent)).Methods("POST")
 		var jsonStr = []byte(`{"id":"3","name":"Content 3"}`)
 		req, err := http.NewRequest("POST", "/api/v1/content", bytes.NewBuffer(jsonStr))
 		req.Header.Set("Content-Type", "application/json")
@@ -128,7 +128,7 @@ func Test_CreateContent(t *testing.T) {
 	})
 
 	t.Run("Find content 3", func(t *testing.T) {
-		r.HandleFunc("/api/v1/content/{id}", basicAuth(getSingleContent, "Please enter your username and password")).Methods("GET")
+		r.HandleFunc("/api/v1/content/{id}", basicAuth(getSingleContent)).Methods("GET")
 		req, err := http.NewRequest("GET", "/api/v1/content/3", nil)
 		if err != nil {
 			t.Fatal(err)
@@ -149,7 +149,7 @@ func Test_CreateContent(t *testing.T) {
 	})
 
 	t.Run("Update content 3", func(t *testing.T) {
-		r.HandleFunc("/api/v1/content/{id}", basicAuth(updateContent, "Please enter your username and password")).Methods("PUT")
+		r.HandleFunc("/api/v1/content/{id}", basicAuth(updateContent)).Methods("PUT")
 		var jsonStr = []byte(`{"id":"3","name":"New content 3"}`)
 		req, err := http.NewRequest("PUT", "/api/v1/content/3", bytes.NewBuffer(jsonStr))
 		req.Header.Set("Content-Type", "application/json")
@@ -171,7 +171,7 @@ func Test_CreateContent(t *testing.T) {
 		}
 	})
 	t.Run("Delete content 3", func(t *testing.T) {
-		r.HandleFunc("/api/v1/content/{id}", basicAuth(deleteContent, "Please enter your username and password")).Methods("DELETE")
+		r.HandleFunc("/api/v1/content/{id}", basicAuth(deleteContent)).Methods("DELETE")
 		req, err := http.NewRequest("DELETE", "/api/v1/content/3", nil)
 		if err != nil {
 			t.Fatal(err)
@@ -186,7 +186,7 @@ func Test_CreateContent(t *testing.T) {
 	})
 
 	t.Run("Not Found", func(t *testing.T) {
-		r.HandleFunc("/api/v1/content/{id}", basicAuth(getSingleContent, "Please enter your username and password")).Methods("GET")
+		r.HandleFunc("/api/v1/content/{id}", basicAuth(getSingleContent)).Methods("GET")
 		req, err := http.NewRequest("GET", "/api/v1/content/3", nil)
 		if err != nil {
 			t.Fatal(err)

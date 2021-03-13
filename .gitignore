@@ -15,6 +15,7 @@ temp/
 .terraform/
 .idea/*
 .scannerwork/*
+.test/*
 
 *.pyc
 
