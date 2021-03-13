@@ -7,17 +7,17 @@ import (
 	"time"
 )
 
+type config struct {
+	Path     string
+	Host     string
+	Override override
+}
+
 type override struct {
 	Path   string
 	User   string
 	Pass   string
 	Scheme string
-}
-
-type config struct {
-	Path     string
-	Host     string
-	Override override
 }
 
 var configuration = []config{
@@ -69,7 +69,7 @@ func generateProxy(conf config) http.Handler {
 
 		if conf.Override.Path != "" {
 			req.URL.Path = conf.Override.Path
-
+			
 			if conf.Override.User != "" {
 				req.SetBasicAuth(conf.Override.User, conf.Override.Pass)
 			}
