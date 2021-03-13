@@ -22,17 +22,7 @@ type override struct {
 
 var configuration = []config{
 	config{
-		Path: "/hello/mgo",
-		Host: "helloworld-mongodb.helloworld.svc.cluster.local",
-		Override: override{
-			Path:   "/api/v1/content/",
-			User:   "user1",
-			Pass:   "password1",
-			Scheme: "http",
-		},
-	},
-	config{
-		Path: "/hello",
+		Path: "/proxy",
 		Host: "helloworld.helloworld.svc.cluster.local",
 		Override: override{
 			Path:   "/api/v1/content/",
@@ -42,14 +32,24 @@ var configuration = []config{
 		},
 	},
 	config{
-		Path: "/independent",
+		Path: "/proxy/mgo",
+		Host: "helloworld-mongodb.helloworld.svc.cluster.local",
+		Override: override{
+			Path:   "/api/v1/content/",
+			User:   "user1",
+			Pass:   "password1",
+			Scheme: "http",
+		},
+	},
+	config{
+		Path: "/proxy/independent",
 		Host: "www.independent.co.uk",
 		Override: override{
 			Path: "/",
 		},
 	},
 	config{
-		Path: "/theguardian",
+		Path: "/proxy/theguardian",
 		Host: "www.theguardian.com",
 		Override: override{
 			Path: "/uk",
@@ -69,7 +69,7 @@ func generateProxy(conf config) http.Handler {
 
 		if conf.Override.Path != "" {
 			req.URL.Path = conf.Override.Path
-			
+
 			if conf.Override.User != "" {
 				req.SetBasicAuth(conf.Override.User, conf.Override.Pass)
 			}
