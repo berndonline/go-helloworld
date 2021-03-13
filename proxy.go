@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/gorilla/mux"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -32,6 +33,16 @@ var configuration = []config{
 		},
 	},
 	config{
+		Path: "/proxy/content/{id}",
+		Host: "helloworld.helloworld.svc.cluster.local",
+		Override: override{
+			Path:   "/api/v1/content/",
+			User:   "user1",
+			Pass:   "password1",
+			Scheme: "http",
+		},
+	},
+	config{
 		Path: "/proxy/mgo",
 		Host: "helloworld-mongodb.helloworld.svc.cluster.local",
 		Override: override{
@@ -42,14 +53,24 @@ var configuration = []config{
 		},
 	},
 	config{
-		Path: "/proxy/independent",
+		Path: "/proxy/mgo/content/{id}",
+		Host: "helloworld-mongodb.helloworld.svc.cluster.local",
+		Override: override{
+			Path:   "/api/v1/content/",
+			User:   "user1",
+			Pass:   "password1",
+			Scheme: "http",
+		},
+	},
+	config{
+		Path: "/proxy/independent/",
 		Host: "www.independent.co.uk",
 		Override: override{
 			Path: "/",
 		},
 	},
 	config{
-		Path: "/proxy/theguardian",
+		Path: "/proxy/theguardian/",
 		Host: "www.theguardian.com",
 		Override: override{
 			Path: "/uk",
@@ -60,6 +81,7 @@ var configuration = []config{
 func generateProxy(conf config) http.Handler {
 	proxy := &httputil.ReverseProxy{Director: func(r *http.Request) {
 		originHost := conf.Host
+		contentID, _ := mux.Vars(r)["id"]
 
 		r.Header.Add("X-Forwarded-Host", r.Host)
 		r.Header.Add("X-Origin-Host", originHost)
@@ -68,8 +90,11 @@ func generateProxy(conf config) http.Handler {
 		r.URL.Scheme = "https"
 
 		if conf.Override.Path != "" {
-			r.URL.Path = conf.Override.Path
-
+			if contentID != "" {
+				r.URL.Path = conf.Override.Path + contentID
+			} else {
+				r.URL.Path = conf.Override.Path
+			}
 			if conf.Override.User != "" {
 				r.SetBasicAuth(conf.Override.User, conf.Override.Pass)
 			}
