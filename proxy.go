@@ -25,7 +25,7 @@ var configuration = []config{
 		Path: "/proxy",
 		Host: "helloworld.helloworld.svc.cluster.local",
 		Override: override{
-			Path:   "/api/v1/content/",
+			Path:   "/api/v1/content",
 			User:   "user1",
 			Pass:   "password1",
 			Scheme: "http",
@@ -35,7 +35,7 @@ var configuration = []config{
 		Path: "/proxy/mgo",
 		Host: "helloworld-mongodb.helloworld.svc.cluster.local",
 		Override: override{
-			Path:   "/api/v1/content/",
+			Path:   "/api/v1/content",
 			User:   "user1",
 			Pass:   "password1",
 			Scheme: "http",
@@ -58,23 +58,23 @@ var configuration = []config{
 }
 
 func generateProxy(conf config) http.Handler {
-	proxy := &httputil.ReverseProxy{Director: func(req *http.Request) {
-
+	proxy := &httputil.ReverseProxy{Director: func(r *http.Request) {
 		originHost := conf.Host
-		req.Header.Add("X-Forwarded-Host", req.Host)
-		req.Header.Add("X-Origin-Host", originHost)
-		req.Host = originHost
-		req.URL.Host = originHost
-		req.URL.Scheme = "https"
+
+		r.Header.Add("X-Forwarded-Host", r.Host)
+		r.Header.Add("X-Origin-Host", originHost)
+		r.Host = originHost
+		r.URL.Host = originHost
+		r.URL.Scheme = "https"
 
 		if conf.Override.Path != "" {
-			req.URL.Path = conf.Override.Path
+			r.URL.Path = conf.Override.Path
 
 			if conf.Override.User != "" {
-				req.SetBasicAuth(conf.Override.User, conf.Override.Pass)
+				r.SetBasicAuth(conf.Override.User, conf.Override.Pass)
 			}
 			if conf.Override.Scheme != "" {
-				req.URL.Scheme = conf.Override.Scheme
+				r.URL.Scheme = conf.Override.Scheme
 			}
 		}
 

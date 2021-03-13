@@ -18,7 +18,7 @@ import (
 
 // all constant variables
 const (
-	contentRoot = "/content/"
+	contentRoot = "/content"
 	contentID   = "/content/{id}"
 )
 
@@ -102,7 +102,7 @@ func main() {
 	registry.MustRegister(httpResponseSizeBytes)
 	registry.MustRegister(version)
 	// http request router for /metrics path to be not exposed through main root path
-	routerInternal := mux.NewRouter().StrictSlash(true)
+	routerInternal := mux.NewRouter()
 	routerInternal.Path("/metrics").Handler(promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 	// main request router for rest-api
 	router := mux.NewRouter().StrictSlash(true)
