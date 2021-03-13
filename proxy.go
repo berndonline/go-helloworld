@@ -8,10 +8,10 @@ import (
 )
 
 type override struct {
-	Header string
-	Match  string
-	Host   string
 	Path   string
+	User   string
+	Pass   string
+	Scheme string
 }
 
 type config struct {
@@ -22,40 +22,44 @@ type config struct {
 
 var configuration = []config{
 	config{
-		Path: "/helloworld-mongodb",
-		Host: "kind.hostgate.net",
+		Path: "/hello/mgo",
+		Host: "helloworld-mongodb.helloworld.svc.cluster.local",
+		Override: override{
+			Path:   "/api/v1/content/",
+			User:   "user1",
+			Pass:   "password1",
+			Scheme: "http",
+		},
 	},
 	config{
-		Path: "/mgo",
-		Host: "kind.hostgate.net",
+		Path: "/hello",
+		Host: "helloworld.helloworld.svc.cluster.local",
 		Override: override{
-			Header: "X-BF-Testing",
-			Match:  "integralist",
-			Path:   "/helloworld-mongodb",
+			Path:   "/api/v1/content/",
+			User:   "user1",
+			Pass:   "password1",
+			Scheme: "http",
 		},
 	},
 	config{
 		Path: "/independent",
 		Host: "www.independent.co.uk",
 		Override: override{
-			Header: "X-BF-Testing",
-			Match:  "integralist",
-			Path:   "/",
+			Path: "/",
 		},
 	},
 	config{
 		Path: "/theguardian",
 		Host: "www.theguardian.com",
 		Override: override{
-			Header: "X-BF-Testing",
-			Match:  "integralist",
-			Path:   "/uk",
+			Path: "/uk",
 		},
 	},
 }
 
 func generateProxy(conf config) http.Handler {
 	proxy := &httputil.ReverseProxy{Director: func(req *http.Request) {
+
 		originHost := conf.Host
 		req.Header.Add("X-Forwarded-Host", req.Host)
 		req.Header.Add("X-Origin-Host", originHost)
@@ -63,11 +67,17 @@ func generateProxy(conf config) http.Handler {
 		req.URL.Host = originHost
 		req.URL.Scheme = "https"
 
-		if conf.Override.Header != "" && conf.Override.Match != "" {
-			if req.Header.Get(conf.Override.Header) == conf.Override.Match {
-				req.URL.Path = conf.Override.Path
+		if conf.Override.Path != "" {
+			req.URL.Path = conf.Override.Path
+
+			if conf.Override.User != "" {
+				req.SetBasicAuth(conf.Override.User, conf.Override.Pass)
+			}
+			if conf.Override.Scheme != "" {
+				req.URL.Scheme = conf.Override.Scheme
 			}
 		}
+
 	}, Transport: &http.Transport{
 		Dial: (&net.Dialer{
 			Timeout: 5 * time.Second,

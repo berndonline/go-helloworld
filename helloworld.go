@@ -111,12 +111,12 @@ func main() {
 	// default response and health handler
 	router.HandleFunc("/", handler)
 	router.HandleFunc("/healthz", healthz)
-	// enable reverse proxy config
+	// define reverse proxy path
 	for _, conf := range configuration {
 		proxy := generateProxy(conf)
-		router.HandleFunc(conf.Path, func(w http.ResponseWriter, r *http.Request) {
+		router.Handle(conf.Path, tracingHandler(func(w http.ResponseWriter, r *http.Request) {
 			proxy.ServeHTTP(w, r)
-		})
+		}))
 	}
 	// api root path defined as subrouter
 	var api = router.PathPrefix("/api").Subrouter()
