@@ -105,7 +105,7 @@ func main() {
 	routerInternal := mux.NewRouter()
 	routerInternal.Path("/metrics").Handler(promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
 	// main request router for rest-api
-	router := mux.NewRouter().StrictSlash(true)
+	router := mux.NewRouter()
 	// prometheus middleware handlers to capture application metrics
 	router.Use(InstrumentHandler)
 	// default response and health handler
