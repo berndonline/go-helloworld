@@ -27,18 +27,18 @@ var (
 	// open tracing service name
 	serviceName string
 	// http handler response
-	response    = os.Getenv("RESPONSE")
+	response = os.Getenv("RESPONSE")
 	// http ports
 	httpPort    = os.Getenv("PORT")
 	metricsPort = os.Getenv("METRICSPORT")
 	// mongodb atlas variables
-	mongodb, _  = strconv.ParseBool(os.Getenv("MONGODB"))
-	dbServers   = strings.Split(os.Getenv("DBSERVERS"), ",")
-	database    = os.Getenv("DATABASE")
-	dbUsername  = os.Getenv("DBUSER")
-	dbPassword  = os.Getenv("DBPASS")
-	dao         = contentsDAO{}
-	db          *mgo.Database
+	mongodb, _ = strconv.ParseBool(os.Getenv("MONGODB"))
+	dbServers  = strings.Split(os.Getenv("DBSERVERS"), ",")
+	database   = os.Getenv("DATABASE")
+	dbUsername = os.Getenv("DBUSER")
+	dbPassword = os.Getenv("DBPASS")
+	dao        = contentsDAO{}
+	db         *mgo.Database
 )
 
 // init function to popluate variables or initiate mongodb atlas connection if enabled
@@ -50,7 +50,7 @@ func init() {
 			serviceName = "helloworld-mongodb"
 		}
 		// set mongoDB atlas connection variables
-		dao.Servers  = dbServers
+		dao.Servers = dbServers
 		dao.Database = database
 		dao.Username = dbUsername
 		dao.Password = dbPassword
