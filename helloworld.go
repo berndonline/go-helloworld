@@ -31,7 +31,7 @@ var (
 	// http ports
 	httpPort    = os.Getenv("PORT")
 	metricsPort = os.Getenv("METRICSPORT")
-	// mongodb atlas variables 
+	// mongodb atlas variables
 	mongodb, _  = strconv.ParseBool(os.Getenv("MONGODB"))
 	dbServers   = strings.Split(os.Getenv("DBSERVERS"), ",")
 	database    = os.Getenv("DATABASE")
@@ -43,12 +43,13 @@ var (
 
 // init function to popluate variables or initiate mongodb atlas connection if enabled
 func init() {
+	// check if mongodb atlas backend should be used for API
 	if mongodb != false {
 		// set default open tracing service name
 		if serviceName == "" {
 			serviceName = "helloworld-mongodb"
 		}
-		// set mongoDB Atlas connection variables
+		// set mongoDB atlas connection variables
 		dao.Servers  = dbServers
 		dao.Database = database
 		dao.Username = dbUsername
