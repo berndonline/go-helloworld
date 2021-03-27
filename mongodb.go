@@ -1,9 +1,12 @@
 package main
 
 import (
+	"crypto/tls"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"log"
+	"net"
+	"time"
 )
 
 const (
@@ -11,12 +14,25 @@ const (
 )
 
 type contentsDAO struct {
-	Server   string
+	Servers  []string
 	Database string
+	Username string
+	Password string
 }
 
 func (m *contentsDAO) Connect() {
-	session, err := mgo.Dial(m.Server)
+	tlsConfig := &tls.Config{}
+	dialInfo := &mgo.DialInfo{
+		Addrs:    m.Servers,
+		Timeout:  60 * time.Second,
+		Username: m.Username,
+		Password: m.Password,
+	}
+	dialInfo.DialServer = func(addr *mgo.ServerAddr) (net.Conn, error) {
+		conn, err := tls.Dial("tcp", addr.String(), tlsConfig)
+		return conn, err
+	}
+	session, err := mgo.DialWithInfo(dialInfo)
 	if err != nil {
 		log.Fatal(err)
 	}

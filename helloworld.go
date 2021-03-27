@@ -24,42 +24,51 @@ const (
 
 // default variables and data access object
 var (
+	// open tracing service name
 	serviceName string
+	// http handler response
 	response    = os.Getenv("RESPONSE")
+	// http ports
 	httpPort    = os.Getenv("PORT")
 	metricsPort = os.Getenv("METRICSPORT")
+	// mongodb atlas variables
 	mongodb, _  = strconv.ParseBool(os.Getenv("MONGODB"))
-	server      = os.Getenv("SERVER")
+	dbServers   = strings.Split(os.Getenv("DBSERVERS"), ",")
 	database    = os.Getenv("DATABASE")
+	dbUsername  = os.Getenv("DBUSER")
+	dbPassword  = os.Getenv("DBPASS")
 	dao         = contentsDAO{}
 	db          *mgo.Database
 )
 
-// init function to popluate variables or initiate mongodb connection if enabled
+// init function to popluate variables or initiate mongodb atlas connection if enabled
 func init() {
+	// check if mongodb atlas backend should be used for API
 	if mongodb != false {
+		// set default open tracing service name
 		if serviceName == "" {
 			serviceName = "helloworld-mongodb"
 		}
-		if server == "" {
-			server = "mongodb"
-		}
-		if database == "" {
-			database = "contents_db"
-		}
-		dao.Server = server
+		// set mongoDB atlas connection variables
+		dao.Servers  = dbServers
 		dao.Database = database
+		dao.Username = dbUsername
+		dao.Password = dbPassword
 		dao.Connect()
 	}
+	// set default open tracing service name
 	if serviceName == "" {
 		serviceName = "helloworld"
 	}
+	// set default response
 	if response == "" {
 		response = "Hello, World - REST API!"
 	}
+	// set default http port
 	if httpPort == "" {
 		httpPort = "8080"
 	}
+	// set default metrics port
 	if metricsPort == "" {
 		metricsPort = "9100"
 	}
