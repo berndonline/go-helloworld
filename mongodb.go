@@ -92,7 +92,7 @@ func (m *contentsDAO) Delete(content mgoApi) error {
 	return err
 }
 
-// readiness probe to check database connection is established
+// readiness probe to check database connection and get status content
 func (m *contentsDAO) Readyz() ([]mgoStatus, error) {
 	var status []mgoStatus
 	err := db.C(STATUS).Find(bson.M{}).All(&status)
