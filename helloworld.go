@@ -91,7 +91,7 @@ func healthz(w http.ResponseWriter, r *http.Request) {
 // http ready handler to use with deployment readiness probe
 func readyz(w http.ResponseWriter, r *http.Request) {
 	if mongodb != false {
-		// mongodb connectivity to display status
+		// mongodb connectivity to display status content
 		readyz, err := dao.Readyz()
 		if err != nil {
 			log.Print("helloworld: readiness status - mongodb connectivity failed")
