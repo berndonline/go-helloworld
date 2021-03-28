@@ -81,11 +81,29 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
 }
 
-// http health handler to use with deployments readiness probe
+// http health handler to use with deployment liveness probe
 func healthz(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	io.WriteString(w, `{"alive": true}`)
+}
+
+// http ready handler to use with deployment readiness probe
+func readyz(w http.ResponseWriter, r *http.Request) {
+	if mongodb != false {
+		// mongodb connectivity to display status
+		readyz, err := dao.Readyz()
+		if err != nil {
+			log.Print("helloworld: readiness status - mongodb connectivity failed")
+			respondWithError(w, http.StatusNotFound, "status not found")
+			return
+		}
+		respondWithJson(w, http.StatusOK, readyz)
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		io.WriteString(w, `{"status": ok}`)
+	}
 }
 
 // function to get IP address from http header - example below for custom CloudFlare X-Forwarder-For header
@@ -117,9 +135,10 @@ func main() {
 	router := mux.NewRouter()
 	// prometheus middleware handlers to capture application metrics
 	router.Use(InstrumentHandler)
-	// default response and health handler
+	// default response, healthz and readyz handlers
 	router.HandleFunc("/", handler)
 	router.HandleFunc("/healthz", healthz)
+	router.HandleFunc("/readyz", readyz)
 	// define reverse proxy path
 	for _, conf := range configuration {
 		proxy := generateProxy(conf)

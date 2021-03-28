@@ -16,11 +16,6 @@ type api struct {
 	Name string `json:"name"`
 }
 
-type mgoApi struct {
-	ID   bson.ObjectId `bson:"_id" json:"id"`
-	Name string        `bson:"name" json:"name"`
-}
-
 type allContent []api
 
 var contents = allContent{
@@ -41,12 +36,14 @@ func getIndexContent(w http.ResponseWriter, r *http.Request) {
 	span := tracer.StartSpan("getIndexContent", ext.RPCServerOption(spanCtx))
 
 	if mongodb != false {
+
 		childSpan := opentracing.GlobalTracer().StartSpan("mongodb-getIndex", opentracing.ChildOf(span.Context()))
 		contents, err := dao.FindAll()
 		defer childSpan.Finish()
 		subchildSpan := opentracing.GlobalTracer().StartSpan("http.response", opentracing.ChildOf(childSpan.Context()))
 
 		if err != nil {
+
 			respondWithError(w, http.StatusInternalServerError, err.Error())
 			log.Print("helloworld: getIndexContent failed")
 			defer subchildSpan.Finish()
@@ -75,12 +72,14 @@ func getSingleContent(w http.ResponseWriter, r *http.Request) {
 	span := tracer.StartSpan("getSingleContent", ext.RPCServerOption(spanCtx))
 
 	if mongodb != false {
+
 		childSpan := opentracing.GlobalTracer().StartSpan("mongodb-getSingle", opentracing.ChildOf(span.Context()))
 		contentID, err := dao.FindById(mux.Vars(r)["id"])
 		defer childSpan.Finish()
 		subchildSpan := opentracing.GlobalTracer().StartSpan("http.response", opentracing.ChildOf(childSpan.Context()))
 
 		if err != nil {
+
 			respondWithError(w, http.StatusNotFound, "Invalid ID")
 			log.Print("helloworld: getSingleContent invalid")
 			defer subchildSpan.Finish()
@@ -209,6 +208,7 @@ func updateContent(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteContent(w http.ResponseWriter, r *http.Request) {
+
 	if mongodb != false {
 
 		content, err := dao.FindById(mux.Vars(r)["id"])
