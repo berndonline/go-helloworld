@@ -53,6 +53,7 @@ func init() {
 		dao.Database = database
 		dao.Username = dbUsername
 		dao.Password = dbPassword
+		// establish mongoDB connection
 		dao.Connect()
 	}
 	// set default open tracing service name
