@@ -6,10 +6,11 @@ import (
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
-	jaegerlog "github.com/uber/jaeger-client-go/log"
+	// jaegerlog "github.com/uber/jaeger-client-go/log"
 	"github.com/uber/jaeger-lib/metrics"
 	"io"
 	"log"
+	"os"
 	"net/http"
 	"strings"
 )
@@ -26,11 +27,11 @@ func initTracer(service string) (opentracing.Tracer, io.Closer) {
 			LogSpans: true,
 		},
 	}
-	jLogger := jaegerlog.StdLogger
+	// jLogger := jaegerlog.StdLogger
 	jMetricsFactory := metrics.NullFactory
 
 	tracer, closer, err := cfg.NewTracer(
-		jaegercfg.Logger(jLogger),
+		// jaegercfg.Logger(jLogger),
 		jaegercfg.Metrics(jMetricsFactory),
 	)
 	if err != nil {
@@ -53,6 +54,9 @@ func tracingHandler(handler http.HandlerFunc) http.HandlerFunc {
 		defer span.Finish()
 		ext.HTTPMethod.Set(span, method)
 		ext.PeerHostIPv4.SetString(span, getIPAddress(r))
+		span.SetTag("hostname", os.Getenv("HOSTNAME"))
+		traceID, _ := span.Context().(jaeger.SpanContext)
+		log.Print("rootSpan:", traceID)
 		Inject(span, r)
 		handler(w, r)
 	}
