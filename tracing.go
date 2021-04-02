@@ -10,8 +10,8 @@ import (
 	"github.com/uber/jaeger-lib/metrics"
 	"io"
 	"log"
-	"os"
 	"net/http"
+	"os"
 	"strings"
 )
 
