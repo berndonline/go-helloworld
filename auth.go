@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"github.com/dgrijalva/jwt-go"
 	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
 	"log"
 	"net/http"
 	"time"
@@ -32,8 +31,7 @@ func basicAuth(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get root span from context
 		tracer := opentracing.GlobalTracer()
-		spanCtx, _ := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-		span := tracer.StartSpan("basicAuth", ext.RPCServerOption(spanCtx))
+		span := StartSpanFromRequest("basicAuth", tracer, r)
 		// basicAuth function
 		realm := "Please enter your username and password"
 		user, pass, ok := r.BasicAuth()
@@ -51,8 +49,7 @@ func basicAuth(handler http.HandlerFunc) http.HandlerFunc {
 		// stop tracer and inject http infos
 		defer span.Finish()
 		// inject tracer into context
-		tracer.Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-
+		Inject(span, r)
 		handler(w, r)
 	}
 }
@@ -99,8 +96,7 @@ func jwtAuth(handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// get root span from context
 		tracer := opentracing.GlobalTracer()
-		spanCtx, _ := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-		span := tracer.StartSpan("jwtAuth", ext.RPCServerOption(spanCtx))
+		span := StartSpanFromRequest("jwtAuth", tracer, r)
 		// json web token function
 		c, err := r.Cookie("token")
 		if err != nil {
@@ -138,8 +134,7 @@ func jwtAuth(handler http.HandlerFunc) http.HandlerFunc {
 		// stop tracer and inject http infos
 		defer span.Finish()
 		// inject tracer into context
-		tracer.Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-
+		Inject(span, r)
 		handler(w, r)
 	}
 }

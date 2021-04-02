@@ -48,14 +48,12 @@ func tracingHandler(handler http.HandlerFunc) http.HandlerFunc {
 		method := strings.ToLower(r.Method)
 
 		tracer := opentracing.GlobalTracer()
-		spanCtx, _ := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-		span := tracer.StartSpan(path, ext.RPCServerOption(spanCtx))
+		span := StartSpanFromRequest(path, tracer, r)
 
 		defer span.Finish()
 		ext.HTTPMethod.Set(span, method)
 		ext.PeerHostIPv4.SetString(span, getIPAddress(r))
-		tracer.Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-
+		Inject(span, r)
 		handler(w, r)
 	}
 }
@@ -67,6 +65,13 @@ func StartSpanFromRequest(spanName string, tracer opentracing.Tracer, r *http.Re
 
 func Extract(tracer opentracing.Tracer, r *http.Request) (opentracing.SpanContext, error) {
 	return tracer.Extract(
+		opentracing.HTTPHeaders,
+		opentracing.HTTPHeadersCarrier(r.Header))
+}
+
+func Inject(span opentracing.Span, r *http.Request) error {
+	return span.Tracer().Inject(
+		span.Context(),
 		opentracing.HTTPHeaders,
 		opentracing.HTTPHeadersCarrier(r.Header))
 }
