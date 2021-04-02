@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/gorilla/mux"
 	opentracing "github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
 	"gopkg.in/mgo.v2/bson"
 	"io/ioutil"
 	"log"
@@ -32,16 +31,15 @@ var contents = allContent{
 func getIndexContent(w http.ResponseWriter, r *http.Request) {
 
 	tracer := opentracing.GlobalTracer()
-	spanCtx, _ := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-	span := tracer.StartSpan("getIndexContent", ext.RPCServerOption(spanCtx))
+	span := StartSpanFromRequest("getIndexContent", tracer, r)
 
 	if mongodb != false {
 
-		childSpan := opentracing.GlobalTracer().StartSpan("mongodb-getIndex", opentracing.ChildOf(span.Context()))
+		childSpan := opentracing.GlobalTracer().StartSpan("mongodb-FindAll", opentracing.ChildOf(span.Context()))
 		contents, err := dao.FindAll()
 		defer childSpan.Finish()
-		subchildSpan := opentracing.GlobalTracer().StartSpan("http.response", opentracing.ChildOf(childSpan.Context()))
 
+		subchildSpan := opentracing.GlobalTracer().StartSpan("http-response", opentracing.ChildOf(childSpan.Context()))
 		if err != nil {
 
 			respondWithError(w, http.StatusInternalServerError, err.Error())
@@ -56,7 +54,7 @@ func getIndexContent(w http.ResponseWriter, r *http.Request) {
 
 	} else {
 
-		childSpan := opentracing.GlobalTracer().StartSpan("http.response", opentracing.ChildOf(span.Context()))
+		childSpan := opentracing.GlobalTracer().StartSpan("http-response", opentracing.ChildOf(span.Context()))
 		log.Print("helloworld: getIndexContent received a request - " + getIPAddress(r))
 		respondWithJson(w, http.StatusOK, contents)
 		defer childSpan.Finish()
@@ -68,15 +66,14 @@ func getIndexContent(w http.ResponseWriter, r *http.Request) {
 func getSingleContent(w http.ResponseWriter, r *http.Request) {
 
 	tracer := opentracing.GlobalTracer()
-	spanCtx, _ := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-	span := tracer.StartSpan("getSingleContent", ext.RPCServerOption(spanCtx))
+	span := StartSpanFromRequest("getSingleContent", tracer, r)
 
 	if mongodb != false {
 
-		childSpan := opentracing.GlobalTracer().StartSpan("mongodb-getSingle", opentracing.ChildOf(span.Context()))
+		childSpan := opentracing.GlobalTracer().StartSpan("mongodb-FindById", opentracing.ChildOf(span.Context()))
 		contentID, err := dao.FindById(mux.Vars(r)["id"])
 		defer childSpan.Finish()
-		subchildSpan := opentracing.GlobalTracer().StartSpan("http.response", opentracing.ChildOf(childSpan.Context()))
+		subchildSpan := opentracing.GlobalTracer().StartSpan("http-response", opentracing.ChildOf(childSpan.Context()))
 
 		if err != nil {
 
@@ -92,7 +89,7 @@ func getSingleContent(w http.ResponseWriter, r *http.Request) {
 
 	} else {
 
-		childSpan := opentracing.GlobalTracer().StartSpan("http.response", opentracing.ChildOf(span.Context()))
+		childSpan := opentracing.GlobalTracer().StartSpan("http-response", opentracing.ChildOf(span.Context()))
 		contentID := mux.Vars(r)["id"]
 
 		for _, singleContent := range contents {
@@ -115,12 +112,11 @@ func getSingleContent(w http.ResponseWriter, r *http.Request) {
 func createContent(w http.ResponseWriter, r *http.Request) {
 
 	tracer := opentracing.GlobalTracer()
-	spanCtx, _ := tracer.Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(r.Header))
-	span := tracer.StartSpan("createContent", ext.RPCServerOption(spanCtx))
+	span := StartSpanFromRequest("createContent", tracer, r)
 
 	if mongodb != false {
 
-		childSpan := opentracing.GlobalTracer().StartSpan("mongodb-create", opentracing.ChildOf(span.Context()))
+		childSpan := opentracing.GlobalTracer().StartSpan("mongodb-Insert", opentracing.ChildOf(span.Context()))
 		defer r.Body.Close()
 		var newContent mgoApi
 
@@ -145,7 +141,7 @@ func createContent(w http.ResponseWriter, r *http.Request) {
 
 	} else {
 
-		childSpan := opentracing.GlobalTracer().StartSpan("addedContent", opentracing.ChildOf(span.Context()))
+		childSpan := opentracing.GlobalTracer().StartSpan("content-Insert", opentracing.ChildOf(span.Context()))
 		defer r.Body.Close()
 		var newContent api
 		reqBody, err := ioutil.ReadAll(r.Body)

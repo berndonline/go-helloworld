@@ -22,5 +22,8 @@ RUN apk add --no-cache ca-certificates
 # Copy the binary to the production image from build image
 COPY --from=builder /app/server /server
 
+# Copy static content to container image.
+COPY static/ /static/
+
 # Run web service on startup.
 CMD ["/server"]

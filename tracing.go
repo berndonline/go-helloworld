@@ -59,3 +59,14 @@ func tracingHandler(handler http.HandlerFunc) http.HandlerFunc {
 		handler(w, r)
 	}
 }
+
+func StartSpanFromRequest(spanName string, tracer opentracing.Tracer, r *http.Request) opentracing.Span {
+	spanCtx, _ := Extract(tracer, r)
+	return tracer.StartSpan(spanName, ext.RPCServerOption(spanCtx))
+}
+
+func Extract(tracer opentracing.Tracer, r *http.Request) (opentracing.SpanContext, error) {
+	return tracer.Extract(
+		opentracing.HTTPHeaders,
+		opentracing.HTTPHeadersCarrier(r.Header))
+}

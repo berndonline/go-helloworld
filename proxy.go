@@ -23,7 +23,7 @@ type override struct {
 
 var configuration = []config{
 	config{
-		Path: "/proxy",
+		Path: "/helloworld",
 		Host: "helloworld.helloworld.svc.cluster.local",
 		Override: override{
 			Path:   "/api/v1/content",
@@ -33,7 +33,7 @@ var configuration = []config{
 		},
 	},
 	config{
-		Path: "/proxy/content/{id}",
+		Path: "/helloworld/content/{id}",
 		Host: "helloworld.helloworld.svc.cluster.local",
 		Override: override{
 			Path:   "/api/v1/content/",
@@ -43,7 +43,7 @@ var configuration = []config{
 		},
 	},
 	config{
-		Path: "/proxy/mgo",
+		Path: "/helloworld-mongodb",
 		Host: "helloworld-mongodb.helloworld.svc.cluster.local",
 		Override: override{
 			Path:   "/api/v1/content",
@@ -53,7 +53,7 @@ var configuration = []config{
 		},
 	},
 	config{
-		Path: "/proxy/mgo/content/{id}",
+		Path: "/helloworld-mongodb/content/{id}",
 		Host: "helloworld-mongodb.helloworld.svc.cluster.local",
 		Override: override{
 			Path:   "/api/v1/content/",
@@ -63,14 +63,14 @@ var configuration = []config{
 		},
 	},
 	config{
-		Path: "/proxy/independent/",
+		Path: "/external/independent/",
 		Host: "www.independent.co.uk",
 		Override: override{
 			Path: "/",
 		},
 	},
 	config{
-		Path: "/proxy/theguardian/",
+		Path: "/external/theguardian/",
 		Host: "www.theguardian.com",
 		Override: override{
 			Path: "/uk",

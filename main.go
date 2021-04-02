@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -9,7 +8,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	mgo "gopkg.in/mgo.v2"
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -75,55 +73,6 @@ func init() {
 	}
 }
 
-// default http response handler
-func handler(w http.ResponseWriter, r *http.Request) {
-	log.Print("helloworld: defaultHandler received a request - " + getIPAddress(r))
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, response+"\n"+os.Getenv("HOSTNAME"))
-}
-
-// http health handler to use with deployment liveness probe
-func healthz(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	io.WriteString(w, `ok`)
-}
-
-// http ready handler to use with deployment readiness probe
-func readyz(w http.ResponseWriter, r *http.Request) {
-	if mongodb != false {
-		// mongodb connectivity to display status content
-		readyz, err := dao.Readyz()
-		if err != nil {
-			log.Print("helloworld: readiness - mongodb not ok")
-			w.WriteHeader(http.StatusInternalServerError)
-			io.WriteString(w, `notok`)
-			return
-		}
-		// check if status match expected response
-		readyzJson, _ := json.Marshal(readyz)
-		response := string(readyzJson)
-		expected := `[{"id":"606077e5e1e6bd09812a1098","status":"ok"}]`
-		if response != expected {
-			log.Print("helloworld: readiness - status not ok")
-			w.WriteHeader(http.StatusInternalServerError)
-			io.WriteString(w, `notok`)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		io.WriteString(w, `ok`)
-
-	} else {
-		w.WriteHeader(http.StatusOK)
-		io.WriteString(w, `ok`)
-	}
-}
-
-// function to get IP address from http header - example below for custom CloudFlare X-Forwarder-For header
-func getIPAddress(r *http.Request) string {
-	ip := strings.TrimSpace(r.Header.Get("CF-Connecting-IP"))
-	return ip
-}
-
 func main() {
 	// initialize tracer and servicename
 	tracer, closer := initTracer(serviceName)
@@ -143,21 +92,28 @@ func main() {
 	// http request router for /metrics path to be not exposed through main root path
 	routerInternal := mux.NewRouter()
 	routerInternal.Path("/metrics").Handler(promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+	// exposing heathz and readyz handlers via internal router
+	routerInternal.HandleFunc("/healthz", healthz)
+	routerInternal.HandleFunc("/readyz", readyz)
 	// main request router for rest-api
 	router := mux.NewRouter()
 	// prometheus middleware handlers to capture application metrics
 	router.Use(InstrumentHandler)
-	// default response, healthz and readyz handlers
+	// default response handler
 	router.HandleFunc("/", handler)
-	router.HandleFunc("/healthz", healthz)
-	router.HandleFunc("/readyz", readyz)
-	// define reverse proxy path
+	// static file http handler
+	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static/"))))
+	// reverse proxy server
+	var proxy = router.PathPrefix("/proxy").Subrouter()
 	for _, conf := range configuration {
-		proxy := generateProxy(conf)
-		router.Handle(conf.Path, tracingHandler(func(w http.ResponseWriter, r *http.Request) {
-			proxy.ServeHTTP(w, r)
+		proxyConf := generateProxy(conf)
+		proxy.Handle(conf.Path, tracingHandler(func(w http.ResponseWriter, r *http.Request) {
+			proxyConf.ServeHTTP(w, r)
 		}))
 	}
+	proxy.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	})
 	// api root path defined as subrouter
 	var api = router.PathPrefix("/api").Subrouter()
 	api.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -186,7 +142,7 @@ func main() {
 	v2.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	})
-	// function to start /metrics request router on port TCP 9100 (default)
+	// function to start internal request router on port TCP 9100 (default)
 	go func() {
 		log.Printf("helloworld: metrics listening on port %s", metricsPort)
 		if err := http.ListenAndServe(fmt.Sprintf(":%s", metricsPort), routerInternal); err != nil {
