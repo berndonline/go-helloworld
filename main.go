@@ -93,7 +93,7 @@ func main() {
 	// http request router for /metrics path to be not exposed through main root path
 	routerInternal := mux.NewRouter()
 	routerInternal.Path("/metrics").Handler(promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
-	// exposing heathz and readyz handlers via internal router
+	// exposing healthz and readyz handlers via internal router
 	routerInternal.HandleFunc("/healthz", healthz)
 	routerInternal.HandleFunc("/readyz", readyz)
 	// main request router for rest-api
@@ -151,7 +151,7 @@ func main() {
 			return
 		}
 	}()
-	// enable mux request logging handler for default router
+	// enable mux request logging handler for external request router
 	loggingRouter := handlers.CombinedLoggingHandler(os.Stdout, router)
 	// main request router to expose default handlers and api versions on port TCP 8080 (default)
 	log.Printf("helloworld: listening on port %s", httpPort)
