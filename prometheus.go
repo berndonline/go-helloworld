@@ -93,22 +93,20 @@ func (r *responseWriterDelegator) Write(b []byte) (int, error) {
 func estimateRequestSize(r *http.Request) int64 {
 	var reqSize int64
 
-	// estimate request line https://www.w3.org/Protocols/rfc2616/rfc2616-sec5.html
 	reqSize += int64(len(r.Method))
 	if r.URL != nil {
 		reqSize += int64(len(r.URL.Path))
 	}
 	reqSize += int64(len(r.Proto))
-	reqSize += 4 //SP SP CRLF
+	reqSize += 4
 
-	// TODO: needs furhter work to improve estimation
 	for key, vals := range r.Header {
 		reqSize += int64(len(key))
 
 		for _, v := range vals {
 			reqSize += int64(len(v))
 		}
-		reqSize += 2 // CRLF
+		reqSize += 2
 	}
 
 	if r.ContentLength != -1 {
