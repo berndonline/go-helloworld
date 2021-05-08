@@ -24,7 +24,7 @@ const (
 // default variables and data access object
 var (
 	// open tracing service name
-	serviceName string
+	serviceName = os.Getenv("SERVICENAME")
 	// http handler response
 	response = os.Getenv("RESPONSE")
 	// http ports
