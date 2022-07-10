@@ -15,9 +15,9 @@ podEnv:
   - name: RESPONSE
     value: "Hello, World - REST API!"
   - name: PORT
-    value: 8080
+    value: "8080"
   - name: METRICSPORT
-    value: 9100
+    value: "9100"
 
 service:
   type: ClusterIP
