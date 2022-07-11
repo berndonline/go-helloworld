@@ -11,6 +11,9 @@ fullnameOverride: ""
 
 podAnnotations: {}
 
+podLabels:
+  loki.logging.hostgate.net/forwarding: enabled
+
 podEnv:
   - name: RESPONSE
     value: "Hello, World - REST API!"
