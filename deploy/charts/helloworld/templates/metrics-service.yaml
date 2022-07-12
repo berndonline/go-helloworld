@@ -4,6 +4,7 @@ kind: Service
 metadata:
   name: {{ include "helloworld.fullname" . }}-metrics
   labels:
+    {{- include "helloworld.labels" . | nindent 4 }}
     app.kubernetes.io/metrics: {{ include "helloworld.fullname" . }}-metrics
 spec:
   type: ClusterIP
