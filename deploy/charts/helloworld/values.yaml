@@ -12,7 +12,7 @@ fullnameOverride: ""
 podAnnotations: {}
 
 podLabels:
-  loki.logging.hostgate.net/forwarding: enabled
+  loki.logging.vector.dev/forwarding: enabled
 
 podEnv:
   - name: RESPONSE
