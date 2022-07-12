@@ -16,5 +16,5 @@ spec:
     - {{ .Release.Namespace }}
   selector:
     matchLabels:
-      {{- include "helloworld.selectorLabels" . | nindent 6 }}
+       app.kubernetes.io/metrics: {{ include "helloworld.fullname" . }}-metrics
 {{- end }}
