@@ -1,0 +1,16 @@
+{{- if .Values.metrics.rbacEnabled -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "helloworld.fullname" . }}-prometheus
+  labels:
+    {{- include "helloworld.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "helloworld.fullname" . }}-prometheus
+subjects:
+- kind: ServiceAccount
+  name:  {{ .Values.metrics.rbacConfig.prometheusServiceAccount }}
+  namespace: {{ .Values.metrics.rbacConfig.prometheusNamespace }}
+{{- end }}

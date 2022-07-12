@@ -38,6 +38,15 @@ ingress:
         - path: /helloworld(/|$)(.*)
           pathType: ImplementationSpecific
 
+metrics:
+  enabled: false
+  port: 9100
+  endpoint: /metrics
+  rbacEnabled: false
+  rbacConfig:
+    prometheusServiceAccount: prometheus-k8s
+    prometheusNamespace: monitoring
+
 tracing:
   enabled: false
   collectorArgs: 
