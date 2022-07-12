@@ -11,6 +11,6 @@ roleRef:
   name: {{ include "helloworld.fullname" . }}-prometheus
 subjects:
 - kind: ServiceAccount
-  name:  {{ .Values.metrics.rbacConfig.prometheusServiceAccount }}
-  namespace: {{ .Values.metrics.rbacConfig.prometheusNamespace }}
+  name:  {{ .Values.metrics.prometheusServiceAccount }}
+  namespace: {{ .Values.metrics.prometheusNamespace }}
 {{- end }}

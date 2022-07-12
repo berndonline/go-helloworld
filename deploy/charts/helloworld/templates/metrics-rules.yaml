@@ -1,0 +1,12 @@
+{{- if .Values.metrics.enabled -}}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "helloworld.fullname" . }}-rules
+  namespace: {{ .Values.metrics.prometheusNamespace }}
+  labels:
+    {{- include "helloworld.labels" . | nindent 4 }}
+spec:
+  groups:
+    {{- toYaml .Values.metrics.rules | nindent 4 }}
+{{- end }}
