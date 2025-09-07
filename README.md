@@ -6,7 +6,7 @@ Simple Go REST API service demonstrating best practices for HTTP routing, metric
 - Prometheus metrics on `/metrics` (internal port)
 - Optional reverse proxy routes under `/proxy`
 
-This repo includes a Helm chart for Kubernetes deployment. Deployment instructions were moved to `deploy/README.md`.
+This repo includes a Helm chart for Kubernetes deployment under `deploy/README.md`.
 
 ## Local Development
 
