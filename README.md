@@ -6,69 +6,7 @@ Simple Go REST API service demonstrating best practices for HTTP routing, metric
 - Prometheus metrics on `/metrics` (internal port)
 - Optional reverse proxy routes under `/proxy`
 
-This repo includes a Helm chart for Kubernetes deployment.
-
-## Deploy with Helm
-
-Prerequisites:
-- Kubernetes cluster and `kubectl` configured
-- Helm 3 installed
-- Container image published to a registry (default: `ghcr.io/berndonline/k8s/go-helloworld`)
-
-Add or update values as needed and install:
-
-```bash
-cd deploy/charts/helloworld
-helm upgrade --install helloworld . \
-  --namespace default \
-  --create-namespace \
-  --set image.repository=ghcr.io/berndonline/k8s/go-helloworld \
-  --set image.tag="v0.0.1"
-```
-
-### Options
-
-- Image
-  - `--set image.repository=...`
-  - `--set image.tag=...` (leave empty to use chart `appVersion`)
-  - `--set image.pullPolicy=IfNotPresent`
-
-- Ingress
-  - `--set ingress.enabled=true`
-  - `--set ingress.hosts[0].host=my.example.com`
-  - `--set ingress.hosts[0].paths[0].path=/helloworld(/|$)(.*)`
-  - `--set ingress.className=nginx`
-
-- Metrics (Prometheus Operator / kube-prometheus-stack)
-  - `--set metrics.enabled=true`
-  - Optional RBAC (if your Prometheus requires it within the app namespace):
-    - `--set metrics.rbacEnabled=true`
-    - `--set metrics.prometheusServiceAccount=prometheus-k8s`
-    - `--set metrics.prometheusNamespace=monitoring`
-  - Optional alert rules (edit `values.yaml` under `metrics.rules`)
-
-- Tracing (Jaeger agent sidecar)
-  - `--set tracing.enabled=true`
-  - `--set tracing.collectorArgs={"--reporter.grpc.host-port=dns:///jaeger-collector-headless.observability:14250","--reporter.type=grpc"}`
-
-- Resources and Security
-  - Defaults are set in `values.yaml` (requests/limits)
-  - Container and pod security contexts are enabled by default; override via:
-    - `--set containerSecurityContext.readOnlyRootFilesystem=false`
-    - `--set podSecurityContext.runAsNonRoot=true`
-
-- Service Account
-  - `--set serviceAccount.create=true` to create a SA for the deployment
-  - `--set serviceAccount.name=my-sa` to use an existing SA
-
-- Pod Disruption Budget
-  - `--set pdb.enabled=true` (set `pdb.minAvailable` as needed)
-
-### Uninstall
-
-```bash
-helm uninstall helloworld -n default
-```
+This repo includes a Helm chart for Kubernetes deployment. Deployment instructions were moved to `deploy/README.md`.
 
 ## Local Development
 
@@ -82,6 +20,82 @@ Run locally:
 
 ```bash
 docker run --rm -p 8080:8080 -p 9100:9100 ghcr.io/berndonline/k8s/go-helloworld:dev
+```
+
+## Usage with curl
+
+Below are examples to exercise the service locally (assuming it’s running with `-p 8080:8080 -p 9100:9100`).
+
+### Root handler
+
+```bash
+# Default greeting + hostname
+curl -sS http://localhost:8080/
+
+# Customize response message via env var when starting the container
+# docker run -e RESPONSE="Hello from curl" -p 8080:8080 -p 9100:9100 ghcr.io/berndonline/k8s/go-helloworld:dev
+curl -sS http://localhost:8080/
+```
+
+### Health, readiness, and metrics (internal port)
+
+```bash
+curl -sS http://localhost:9100/healthz
+curl -sS http://localhost:9100/readyz
+curl -sS http://localhost:9100/metrics | head -n 20
+```
+
+### API v1 (Basic Auth)
+
+```bash
+# List content
+curl -u user1:password1 http://localhost:8080/api/v1/content
+
+# Get single item
+curl -u user1:password1 http://localhost:8080/api/v1/content/1
+
+# Create content
+curl -u user1:password1 \
+  -H 'Content-Type: application/json' \
+  -d '{"id":"3","name":"Content 3"}' \
+  http://localhost:8080/api/v1/content
+
+# Update content
+curl -u user1:password1 \
+  -X PUT -H 'Content-Type: application/json' \
+  -d '{"name":"Updated 3"}' \
+  http://localhost:8080/api/v1/content/3
+
+# Delete content
+curl -u user1:password1 -X DELETE http://localhost:8080/api/v1/content/3
+```
+
+### API v2 (JWT)
+
+```bash
+# Login and store cookie
+curl -i -c cookie.txt \
+  -H 'Content-Type: application/json' \
+  -d '{"username":"user1","password":"password1"}' \
+  http://localhost:8080/api/v2/login
+
+# Use token cookie to list content
+curl -b cookie.txt http://localhost:8080/api/v2/content
+
+# Refresh token (updates cookie)
+curl -b cookie.txt -c cookie.txt -X POST http://localhost:8080/api/v2/refresh
+
+# Logout
+curl -b cookie.txt -X POST http://localhost:8080/api/v2/logout
+```
+
+### Reverse proxy routes (optional)
+
+The app exposes optional proxy endpoints under `/proxy`. These forward to upstream hosts defined in `internal/app/proxy.go` and are primarily intended for in-cluster use where the upstream DNS names resolve.
+
+```bash
+# Example (requires in-cluster DNS):
+curl -sS http://localhost:8080/proxy/helloworld
 ```
 
 ## Repository Layout
