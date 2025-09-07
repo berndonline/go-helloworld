@@ -101,7 +101,7 @@ curl -sS http://localhost:8080/proxy/helloworld
 ## Repository Layout
 
 - `cmd/helloworld`: app entrypoint
-- `internal/app`: server, api, auth, mongo, metrics, tracing, proxy
+- `internal/app`: server, api, auth, metrics, tracing, proxy
 - `web/static`: static assets
 - `build/docker/Dockerfile`: container build
 - `deploy/charts/helloworld`: Helm chart
