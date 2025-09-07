@@ -17,7 +17,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -mod=readonly -v -o server ./cmd/helloworl
 
 # Use alpine as production image
 FROM alpine:3
-RUN apk add --no-cache ca-certificates
+RUN apk add --no-cache ca-certificates \
+    && addgroup -S app \
+    && adduser -S -G app app
 
 # Copy the binary to the production image from build image
 COPY --from=builder /app/server /server
@@ -26,5 +28,5 @@ COPY --from=builder /app/server /server
 COPY web/static/ /static/
 
 # Run web service on startup.
+USER app:app
 CMD ["/server"]
-
