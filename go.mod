@@ -12,5 +12,4 @@ require (
 	github.com/steinfletcher/apitest-jsonpath v1.6.0
 	github.com/uber/jaeger-client-go v2.25.0+incompatible
 	github.com/uber/jaeger-lib v2.4.0+incompatible
-	gopkg.in/mgo.v2 v2.0.0-20190816093944-a6b53ec6cb22
 )

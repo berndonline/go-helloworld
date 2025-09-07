@@ -43,26 +43,6 @@ var configuration = []config{
         },
     },
     config{
-        Path: "/helloworld-mongodb",
-        Host: "helloworld-mongodb.helloworld.svc.cluster.local",
-        Override: override{
-            Path:   "/api/v1/content",
-            User:   "user1",
-            Pass:   "password1",
-            Scheme: "http",
-        },
-    },
-    config{
-        Path: "/helloworld-mongodb/content/{id}",
-        Host: "helloworld-mongodb.helloworld.svc.cluster.local",
-        Override: override{
-            Path:   "/api/v1/content/",
-            User:   "user1",
-            Pass:   "password1",
-            Scheme: "http",
-        },
-    },
-    config{
         Path: "/external/independent/",
         Host: "www.independent.co.uk",
         Override: override{
