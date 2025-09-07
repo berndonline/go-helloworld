@@ -14,3 +14,4 @@ subjects:
   name:  {{ .Values.metrics.prometheusServiceAccount }}
   namespace: {{ .Values.metrics.prometheusNamespace }}
 {{- end }}
+

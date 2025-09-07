@@ -3,13 +3,25 @@ replicaCount: 1
 image:
   repository: ghcr.io/berndonline/k8s/go-helloworld
   pullPolicy: IfNotPresent
-  tag: "latest"
+  # Leave tag empty to default to Chart.AppVersion; CI should set a tag per release
+  tag: ""
 
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
 
 podAnnotations: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
 
 podLabels:
   loki.logging.vector.dev/forwarding: enabled
@@ -95,13 +107,23 @@ tracing:
     - --reporter.grpc.host-port=dns:///jaeger-collector-headless.observability:14250
     - --reporter.type=grpc
 
-resources: {}
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+serviceAccount:
+  create: false
+  name: ""
+
+pdb:
+  enabled: false
+  minAvailable: 1
+
+topologySpreadConstraints: []
 
 nodeSelector: {}
 
