@@ -86,7 +86,7 @@ curl -b cookie.txt http://localhost:8080/api/v2/content
 curl -b cookie.txt -c cookie.txt -X POST http://localhost:8080/api/v2/refresh
 
 # Logout
-curl -b cookie.txt -X POST http://localhost:8080/api/v2/logout
+curl -b cookie.txt -c cookie.txt -X POST http://localhost:8080/api/v2/logout
 ```
 
 ### Reverse proxy routes (optional)
