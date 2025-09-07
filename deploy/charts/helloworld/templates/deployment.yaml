@@ -19,8 +19,21 @@ spec:
         {{- include "helloworld.selectorLabels" . | nindent 8 }}
         {{- toYaml .Values.podLabels | nindent 8 }}
     spec:
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ include "helloworld.serviceAccountName" . }}
+      {{- else if .Values.serviceAccount.name }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      {{- end }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.topologySpreadConstraints }}
+      topologySpreadConstraints:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       containers:
@@ -52,6 +65,10 @@ spec:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- with .Values.containerSecurityContext }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- with .Values.podEnv }}
           env:
              {{- toYaml . | nindent 10 }}
@@ -70,6 +87,9 @@ spec:
               port: 9100
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+      {{- if .Values.pdb.enabled }}
+      # PDB is created as a separate resource; see pdb.yaml
+      {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
