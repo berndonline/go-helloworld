@@ -82,6 +82,8 @@ func Run() {
     // application version displayed in prometheus
     version.Set(0.1)
     log.Print("helloworld: is starting...")
+    // log the running UID/GID for visibility in non-root environments
+    log.Printf("helloworld: running as uid=%d gid=%d", os.Getuid(), os.Getgid())
     // prometheus registry filtering the exported metrics
     registry := prometheus.NewRegistry()
     registry.MustRegister(httpRequestDuration)
@@ -102,8 +104,8 @@ func Run() {
     router.Use(InstrumentHandler)
     // default response handler
     router.HandleFunc("/", handler)
-    // static file http handler
-    router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./web/static/"))))
+    // static file http handler (served from /static inside container)
+    router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("/static/"))))
     // reverse proxy server
     var proxy = router.PathPrefix("/proxy").Subrouter()
     for _, conf := range configuration {
@@ -160,4 +162,3 @@ func Run() {
         return
     }
 }
-

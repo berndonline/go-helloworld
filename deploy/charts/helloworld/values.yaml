@@ -4,7 +4,7 @@ image:
   repository: ghcr.io/berndonline/k8s/go-helloworld
   pullPolicy: IfNotPresent
   # Leave tag empty to default to Chart.AppVersion; CI should set a tag per release
-  tag: ""
+  tag: "main"
 
 imagePullSecrets: []
 nameOverride: ""
@@ -14,6 +14,9 @@ podAnnotations: {}
 
 podSecurityContext:
   runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
   seccompProfile:
     type: RuntimeDefault
 
