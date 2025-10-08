@@ -3,6 +3,7 @@ module github.com/berndonline/go-helloworld/go-rest-api
 go 1.13
 
 require (
+	github.com/aws/aws-sdk-go v1.44.314 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/mux v1.8.0

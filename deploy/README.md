@@ -15,10 +15,45 @@ Install or upgrade the chart:
 ```bash
 cd deploy/charts/helloworld
 helm upgrade --install helloworld . \
-  --namespace default \
+  --namespace helloworld \
   --create-namespace \
   --set image.repository=ghcr.io/berndonline/k8s/go-helloworld \
-  --set image.tag="v0.0.1"
+  --set image.tag="latest"
+```
+
+### Examples
+
+Regex path (NGINX Ingress) example
+
+```bash
+cd deploy/charts/helloworld
+helm upgrade --install helloworld . \
+  --namespace helloworld \
+  --create-namespace \
+  --set ingress.enabled=true \
+  --set ingress.className=nginx \
+  --set ingress.hosts[0].host=my.example.com \
+  --set ingress.hosts[0].paths[0].path='/helloworld(/|$)(.*)' \
+  --set ingress.hosts[0].paths[0].pathType=ImplementationSpecific \
+  --set image.repository=ghcr.io/berndonline/k8s/go-helloworld \
+  --set image.tag="latest"
+```
+
+Prefix path (no regex) example
+
+```bash
+cd deploy/charts/helloworld
+helm upgrade --install helloworld . \
+  --namespace helloworld \
+  --create-namespace \
+  --set ingress.enabled=true \
+  --set ingress.className=nginx \
+  --set ingress.annotations."nginx\.ingress\.kubernetes\.io/rewrite-target"="/" \
+  --set ingress.hosts[0].host=my.example.com \
+  --set ingress.hosts[0].paths[0].path=/helloworld \
+  --set ingress.hosts[0].paths[0].pathType=Prefix \
+  --set image.repository=ghcr.io/berndonline/k8s/go-helloworld \
+  --set image.tag="latest"
 ```
 
 ### Options
@@ -32,7 +67,10 @@ helm upgrade --install helloworld . \
   - `--set ingress.enabled=true`
   - `--set ingress.hosts[0].host=my.example.com`
   - `--set ingress.hosts[0].paths[0].path=/helloworld(/|$)(.*)`
+  - `--set ingress.hosts[0].paths[0].pathType=ImplementationSpecific` (defaults; use `Prefix` for non-regex)
   - `--set ingress.className=nginx`
+  - Regex matching is enabled by default (`nginx.ingress.kubernetes.io/use-regex: "true"`)
+  - For non-regex prefix matching, override rewrite target: `--set ingress.annotations."nginx\.ingress\.kubernetes\.io/rewrite-target"="/"`
 
 - Metrics (Prometheus Operator / kube-prometheus-stack)
   - `--set metrics.enabled=true`
@@ -45,6 +83,21 @@ helm upgrade --install helloworld . \
 - Tracing (Jaeger agent sidecar)
   - `--set tracing.enabled=true`
   - `--set tracing.collectorArgs={"--reporter.grpc.host-port=dns:///jaeger-collector-headless.observability:14250","--reporter.type=grpc"}`
+
+- DynamoDB backing store / AWS STS
+  - `--set dynamodb.enabled=true`
+  - `--set dynamodb.tableName=my-dynamodb-table`
+  - `--set dynamodb.region=eu-west-1`
+  - `--set dynamodb.roleArn=arn:aws:iam::123456789012:role/MyHelloWorldRole`
+  - Optionally set a custom session name: `--set dynamodb.roleSessionName=helloworld`
+  - When using IRSA, also provide the projected token path (usually `/var/run/secrets/eks.amazonaws.com/serviceaccount/token`) via `--set dynamodb.webIdentityTokenFile=...`
+  - To have the chart project a service account token with a custom audience, enable `--set dynamodb.serviceAccountTokenProjection.enabled=true` and optionally tune:
+    - `--set dynamodb.serviceAccountTokenProjection.mountPath=/var/run/secrets/eks.amazonaws.com/serviceaccount`
+    - `--set dynamodb.serviceAccountTokenProjection.tokenFile=token`
+    - `--set dynamodb.serviceAccountTokenProjection.audience=sts.amazonaws.com`
+    - `--set dynamodb.serviceAccountTokenProjection.expirationSeconds=3600`
+    - `--set dynamodb.serviceAccountTokenProjection.volumeName=aws-token`
+  - Ensure the pod uses an IAM role that is permitted to assume `roleArn` (for example by enabling `serviceAccount.create` and binding it through IAM Roles for Service Accounts)
 
 - Resources and Security
   - Defaults are set in `values.yaml` (requests/limits)
@@ -62,6 +115,5 @@ helm upgrade --install helloworld . \
 ### Uninstall
 
 ```bash
-helm uninstall helloworld -n default
+helm uninstall helloworld -n helloworld
 ```
-
