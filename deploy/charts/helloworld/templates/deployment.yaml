@@ -69,9 +69,38 @@ spec:
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with .Values.podEnv }}
+          {{- $hasPodEnv := .Values.podEnv }}
+          {{- $dynamodb := .Values.dynamodb }}
+          {{- if or $hasPodEnv $dynamodb.enabled }}
           env:
-             {{- toYaml . | nindent 10 }}
+            {{- if $hasPodEnv }}
+            {{- toYaml .Values.podEnv | nindent 12 }}
+            {{- end }}
+            {{- if $dynamodb.enabled }}
+            - name: DYNAMODB_TABLE
+              value: "{{ $dynamodb.tableName }}"
+            - name: AWS_REGION
+              value: "{{ $dynamodb.region }}"
+            - name: AWS_ROLE_ARN
+              value: "{{ $dynamodb.roleArn }}"
+            {{- if $dynamodb.roleSessionName }}
+            - name: AWS_ROLE_SESSION_NAME
+              value: "{{ $dynamodb.roleSessionName }}"
+            {{- end }}
+            {{- if $dynamodb.webIdentityTokenFile }}
+            - name: AWS_WEB_IDENTITY_TOKEN_FILE
+              value: "{{ $dynamodb.webIdentityTokenFile }}"
+            {{- else if $dynamodb.serviceAccountTokenProjection.enabled }}
+            - name: AWS_WEB_IDENTITY_TOKEN_FILE
+              value: "{{ printf "%s/%s" $dynamodb.serviceAccountTokenProjection.mountPath $dynamodb.serviceAccountTokenProjection.tokenFile }}"
+            {{- end }}
+            {{- end }}
+          {{- end }}
+          {{- if $dynamodb.serviceAccountTokenProjection.enabled }}
+          volumeMounts:
+            - name: {{ $dynamodb.serviceAccountTokenProjection.volumeName }}
+              mountPath: "{{ $dynamodb.serviceAccountTokenProjection.mountPath }}"
+              readOnly: true
           {{- end }}
           ports:
             - name: http
@@ -101,4 +130,14 @@ spec:
       {{- with .Values.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.dynamodb.serviceAccountTokenProjection.enabled }}
+      volumes:
+        - name: {{ .Values.dynamodb.serviceAccountTokenProjection.volumeName }}
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: "{{ .Values.dynamodb.serviceAccountTokenProjection.tokenFile }}"
+                  audience: "{{ .Values.dynamodb.serviceAccountTokenProjection.audience }}"
+                  expirationSeconds: {{ .Values.dynamodb.serviceAccountTokenProjection.expirationSeconds }}
       {{- end }}

@@ -37,6 +37,21 @@ podEnv:
   - name: METRICSPORT
     value: "9100"
 
+dynamodb:
+  enabled: false
+  tableName: ""
+  region: ""
+  roleArn: ""
+  roleSessionName: ""
+  webIdentityTokenFile: ""
+  serviceAccountTokenProjection:
+    enabled: false
+    mountPath: /var/run/secrets/eks.amazonaws.com/serviceaccount
+    volumeName: aws-token
+    tokenFile: token
+    audience: sts.amazonaws.com
+    expirationSeconds: 3600
+
 service:
   type: ClusterIP
   port: 80
@@ -46,6 +61,7 @@ ingress:
   className: ""
   annotations:
     kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/use-regex: "true"
     nginx.ingress.kubernetes.io/rewrite-target: /$2
   hosts:
     - host: 

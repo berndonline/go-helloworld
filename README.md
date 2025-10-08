@@ -8,6 +8,19 @@ Simple Go REST API service demonstrating best practices for HTTP routing, metric
 
 This repo includes a Helm chart for [Kubernetes deployment](./deploy/README.md).
 
+## DynamoDB Backing Store
+
+The REST API can persist content in AWS DynamoDB. When the following environment variables are supplied, the service uses AWS STS to obtain short-lived credentials (either via `AssumeRole` or `AssumeRoleWithWebIdentity`) before creating the DynamoDB client:
+
+- `DYNAMODB_TABLE` – table that stores the content items (`id` as the partition key)
+- `AWS_REGION` (or `AWS_DEFAULT_REGION`) – target AWS region
+- `AWS_ROLE_ARN` – IAM role to assume for data access
+- `AWS_ROLE_SESSION_NAME` *(optional)* – explicit session name for the STS call
+- `AWS_WEB_IDENTITY_TOKEN_FILE` *(optional)* – enable IRSA by providing the projected token path
+- When using the bundled Helm chart, you can supply `dynamodb.serviceAccountTokenProjection.*` values to mount a projected service account token with a custom audience (defaults align with EKS IRSA conventions).
+
+If any of the required values are missing, the application logs a warning and falls back to the in-memory seed data (handy for local development and tests).
+
 ## Local Development
 
 Build the container from repo root:
