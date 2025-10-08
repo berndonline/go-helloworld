@@ -1,5 +1,5 @@
 # Use golang build image
-FROM golang:1.13 as builder
+FROM golang:1.21 AS builder
 
 # Create and change to the app directory.
 WORKDIR /app
