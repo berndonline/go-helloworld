@@ -23,7 +23,7 @@ type ContentRepository interface {
 
 var (
 	contentRepoMu sync.RWMutex
-	contentRepo   ContentRepository = newInMemoryRepository(seedContent())
+	contentRepo   ContentRepository = newInMemoryRepository(nil)
 )
 
 func getContentRepository() ContentRepository {
@@ -36,17 +36,4 @@ func setContentRepository(repo ContentRepository) {
 	contentRepoMu.Lock()
 	contentRepo = repo
 	contentRepoMu.Unlock()
-}
-
-func seedContent() allContent {
-	return allContent{
-		{
-			ID:   "1",
-			Name: "Content 1",
-		},
-		{
-			ID:   "2",
-			Name: "Content 2",
-		},
-	}
 }

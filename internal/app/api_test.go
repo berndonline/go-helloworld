@@ -2,10 +2,12 @@ package app
 
 import (
 	"bytes"
-	"github.com/gorilla/mux"
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/gorilla/mux"
 )
 
 var (
@@ -13,12 +15,21 @@ var (
 	password = "password1"
 )
 
-func resetRepository() {
-	setContentRepository(newInMemoryRepository(seedContent()))
+func resetRepository() ContentRepository {
+	repo := newInMemoryRepository(nil)
+	setContentRepository(repo)
+	return repo
 }
 
 func Test_getContentIndex(t *testing.T) {
-	resetRepository()
+	repo := resetRepository()
+	ctx := context.Background()
+	if _, err := repo.CreateContent(ctx, api{ID: "1", Name: "Content 1"}); err != nil {
+		t.Fatalf("failed to seed content 1: %v", err)
+	}
+	if _, err := repo.CreateContent(ctx, api{ID: "2", Name: "Content 2"}); err != nil {
+		t.Fatalf("failed to seed content 2: %v", err)
+	}
 	r := mux.NewRouter()
 	r.HandleFunc("/api/v1/content", basicAuth(getIndexContent)).Methods("GET")
 	req, err := http.NewRequest("GET", "/api/v1/content", nil)
@@ -43,7 +54,14 @@ func Test_getContentIndex(t *testing.T) {
 }
 
 func Test_getSingleContent(t *testing.T) {
-	resetRepository()
+	repo := resetRepository()
+	ctx := context.Background()
+	if _, err := repo.CreateContent(ctx, api{ID: "1", Name: "Content 1"}); err != nil {
+		t.Fatalf("failed to seed content 1: %v", err)
+	}
+	if _, err := repo.CreateContent(ctx, api{ID: "2", Name: "Content 2"}); err != nil {
+		t.Fatalf("failed to seed content 2: %v", err)
+	}
 	r := mux.NewRouter()
 	r.HandleFunc("/api/v1/content/{id}", basicAuth(getSingleContent)).Methods("GET")
 
