@@ -56,6 +56,8 @@ func Run() {
     defer closer.Close()
     // application version displayed in prometheus
     version.Set(0.1)
+    cleanupPublisher := configureContentPublisher()
+    defer cleanupPublisher()
     log.Print("helloworld: is starting...")
     // log the running UID/GID for visibility in non-root environments
     log.Printf("helloworld: running as uid=%d gid=%d", os.Getuid(), os.Getgid())

@@ -21,6 +21,52 @@ The REST API can persist content in AWS DynamoDB. When the following environment
 
 If any of the required values are missing, the application logs a warning and falls back to the in-memory seed data (handy for local development and tests).
 
+## Kafka Publishing
+
+When Kafka settings are supplied the service emits every newly created content record (JSON encoded) to the configured topic. Set the following environment variables:
+
+- `KAFKA_BROKERS` – comma-separated broker list such as `broker-1:9092,broker-2:9092`
+- `KAFKA_TOPIC` – destination topic to produce events to
+- `KAFKA_CLIENT_ID` *(optional)* – custom Kafka client identifier (defaults to the service name)
+
+If either brokers or topic are omitted the producer stays disabled and the API continues to operate normally. The topic must already exist because the producer disables auto-topic creation. You can create it with Strimzi by applying [`deploy/strimzi/kafka-topic.yaml`](deploy/strimzi/kafka-topic.yaml) in the namespace that hosts your Strimzi cluster:
+
+```bash
+kubectl apply -f deploy/strimzi/kafka-topic.yaml -n kafka
+```
+
+When deploying via Helm, point `kafka.brokers` to your bootstrap service (for example `my-cluster-kafka-bootstrap.kafka:9092`) and set `kafka.topic=helloworld` to match the manifest above.
+
+## Architecture Overview
+
+```mermaid
+graph TD
+    clients(["curl / apps / browsers"]) --> router["Mux Router (/ , /api, /proxy)"]
+    router --> root["Root handler (/)\nstatic html + hostname"]
+    router --> metrics["Internal router (:9100)\n/metrics /healthz /readyz"]
+    router --> proxy["Reverse proxy (/proxy/*)\noptional upstreams"]
+    router --> api["/api subrouter"]
+
+    api --> v1["/api/v1\nBasic Auth"]
+    api --> v2["/api/v2\nJWT"]
+    v1 --> handlers["Content handlers\n(list/get/create/update/delete)"]
+    v2 --> handlers
+
+    handlers --> repo["Content repository interface"]
+    repo --> dynamo["DynamoDB (optional)"]
+    repo --> memory["In-memory default"]
+
+    handlers --> kafka["Kafka publisher"]
+    kafka --> topic["Kafka topic (external)"]
+
+    subgraph Observability
+        metrics
+        tracing["OpenTracing / Jaeger"]
+    end
+```
+
+Requests enter through Gorilla Mux, are authenticated (Basic or JWT), and routed to the content handlers. Each create call persists through the repository (DynamoDB when configured, otherwise the in-memory store) and emits a JSON payload to Kafka. Metrics and health handlers stay on the internal port, and tracing spans are sent to Jaeger-compatible collectors.
+
 ## Local Development
 
 Build the container from repo root:

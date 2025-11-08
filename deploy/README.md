@@ -99,6 +99,13 @@ helm upgrade --install helloworld . \
     - `--set dynamodb.serviceAccountTokenProjection.volumeName=aws-token`
   - Ensure the pod uses an IAM role that is permitted to assume `roleArn` (for example by enabling `serviceAccount.create` and binding it through IAM Roles for Service Accounts)
 
+- Kafka producer
+  - `--set kafka.enabled=true`
+  - `--set kafka.topic=content-created`
+  - `--set kafka.brokers[0]=my-cluster-kafka-bootstrap.kafka:9092` (point at your Strimzi bootstrap service; repeat the index for additional brokers if needed)
+  - Optional client identifier: `--set kafka.clientId=helloworld`
+  - Create the topic ahead of time (for Strimzi apply `deploy/strimzi/kafka-topic.yaml` in the Kafka namespace)
+
 - Resources and Security
   - Defaults are set in `values.yaml` (requests/limits)
   - Container and pod security contexts are enabled by default; override via:

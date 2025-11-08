@@ -71,7 +71,8 @@ spec:
           {{- end }}
           {{- $hasPodEnv := .Values.podEnv }}
           {{- $dynamodb := .Values.dynamodb }}
-          {{- if or $hasPodEnv $dynamodb.enabled }}
+          {{- $kafka := .Values.kafka }}
+          {{- if or $hasPodEnv $dynamodb.enabled $kafka.enabled }}
           env:
             {{- if $hasPodEnv }}
             {{- toYaml .Values.podEnv | nindent 12 }}
@@ -93,6 +94,16 @@ spec:
             {{- else if $dynamodb.serviceAccountTokenProjection.enabled }}
             - name: AWS_WEB_IDENTITY_TOKEN_FILE
               value: "{{ printf "%s/%s" $dynamodb.serviceAccountTokenProjection.mountPath $dynamodb.serviceAccountTokenProjection.tokenFile }}"
+            {{- end }}
+            {{- end }}
+            {{- if $kafka.enabled }}
+            - name: KAFKA_BROKERS
+              value: "{{ join "," $kafka.brokers }}"
+            - name: KAFKA_TOPIC
+              value: "{{ $kafka.topic }}"
+            {{- if $kafka.clientId }}
+            - name: KAFKA_CLIENT_ID
+              value: "{{ $kafka.clientId }}"
             {{- end }}
             {{- end }}
           {{- end }}
@@ -131,13 +142,15 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if .Values.dynamodb.serviceAccountTokenProjection.enabled }}
+      {{- $dynamodb := .Values.dynamodb }}
+      {{- $kafka := .Values.kafka }}
+      {{- if $dynamodb.serviceAccountTokenProjection.enabled }}
       volumes:
-        - name: {{ .Values.dynamodb.serviceAccountTokenProjection.volumeName }}
+        - name: {{ $dynamodb.serviceAccountTokenProjection.volumeName }}
           projected:
             sources:
               - serviceAccountToken:
-                  path: "{{ .Values.dynamodb.serviceAccountTokenProjection.tokenFile }}"
-                  audience: "{{ .Values.dynamodb.serviceAccountTokenProjection.audience }}"
-                  expirationSeconds: {{ .Values.dynamodb.serviceAccountTokenProjection.expirationSeconds }}
+                  path: "{{ $dynamodb.serviceAccountTokenProjection.tokenFile }}"
+                  audience: "{{ $dynamodb.serviceAccountTokenProjection.audience }}"
+                  expirationSeconds: {{ $dynamodb.serviceAccountTokenProjection.expirationSeconds }}
       {{- end }}

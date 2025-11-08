@@ -52,6 +52,12 @@ dynamodb:
     audience: sts.amazonaws.com
     expirationSeconds: 3600
 
+kafka:
+  enabled: false
+  topic: ""
+  brokers: []
+  clientId: ""
+
 service:
   type: ClusterIP
   port: 80
