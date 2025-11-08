@@ -104,11 +104,6 @@ helm upgrade --install helloworld . \
   - `--set kafka.topic=content-created`
   - `--set kafka.brokers[0]=broker-1.kafka:9092` (repeat index for multiple brokers)
   - Optional client identifier: `--set kafka.clientId=helloworld`
-  - Enable mTLS with Strimzi secrets:
-    - `--set kafka.tls.enabled=true`
-    - `--set kafka.tls.secretName=helloworld` (the `KafkaUser` name)
-    - `--set kafka.tls.mountPath=/var/run/secrets/kafka` *(default)*
-    - Optionally override Strimzi key names via `kafka.tls.caFile`, `kafka.tls.certFile`, `kafka.tls.keyFile`
 
 - Resources and Security
   - Defaults are set in `values.yaml` (requests/limits)

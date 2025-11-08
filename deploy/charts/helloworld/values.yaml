@@ -57,13 +57,6 @@ kafka:
   topic: ""
   brokers: []
   clientId: ""
-  tls:
-    enabled: false
-    secretName: ""
-    mountPath: /var/run/secrets/kafka
-    caFile: ca.crt
-    certFile: user.crt
-    keyFile: user.key
 
 service:
   type: ClusterIP

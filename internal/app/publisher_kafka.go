@@ -2,8 +2,6 @@ package app
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -19,7 +17,7 @@ type kafkaPublisher struct {
 	writer *kafka.Writer
 }
 
-func newKafkaPublisher(brokers []string, topic, clientID string, tlsConfig *tls.Config) (*kafkaPublisher, error) {
+func newKafkaPublisher(brokers []string, topic, clientID string) (*kafkaPublisher, error) {
 	if len(brokers) == 0 {
 		return nil, errors.New("kafka brokers are required")
 	}
@@ -33,7 +31,6 @@ func newKafkaPublisher(brokers []string, topic, clientID string, tlsConfig *tls.
 		ClientID:    clientID,
 		DialTimeout: 10 * time.Second,
 		IdleTimeout: 30 * time.Second,
-		TLS:         tlsConfig,
 	}
 	writer := &kafka.Writer{
 		Addr:                   kafka.TCP(brokers...),
@@ -76,27 +73,13 @@ func configureContentPublisher() func() {
 		clientID = serviceName
 	}
 
-	var tlsConfig *tls.Config
-	if strings.EqualFold(strings.TrimSpace(os.Getenv("KAFKA_TLS_ENABLED")), "true") {
-		var err error
-		tlsConfig, err = loadTLSConfig(
-			strings.TrimSpace(os.Getenv("KAFKA_TLS_CA_FILE")),
-			strings.TrimSpace(os.Getenv("KAFKA_TLS_CERT_FILE")),
-			strings.TrimSpace(os.Getenv("KAFKA_TLS_KEY_FILE")),
-		)
-		if err != nil {
-			log.Printf("helloworld: kafka TLS configuration invalid: %v", err)
-			return cleanup
-		}
-	}
-
-	publisher, err := newKafkaPublisher(brokers, topic, clientID, tlsConfig)
+	publisher, err := newKafkaPublisher(brokers, topic, clientID)
 	if err != nil {
 		log.Printf("helloworld: unable to initialize kafka publisher: %v", err)
 		return cleanup
 	}
 	setContentPublisher(publisher)
-	log.Printf("helloworld: kafka publisher enabled (topic=%s, brokers=%s, tls=%t)", topic, strings.Join(brokers, ","), tlsConfig != nil)
+	log.Printf("helloworld: kafka publisher enabled (topic=%s, brokers=%s)", topic, strings.Join(brokers, ","))
 
 	return func() {
 		if err := publisher.Close(); err != nil {
@@ -117,35 +100,4 @@ func parseKafkaBrokers(raw string) []string {
 		brokers = append(brokers, broker)
 	}
 	return brokers
-}
-
-func loadTLSConfig(caFile, certFile, keyFile string) (*tls.Config, error) {
-	switch {
-	case caFile == "":
-		return nil, errors.New("KAFKA_TLS_CA_FILE is required when TLS is enabled")
-	case certFile == "":
-		return nil, errors.New("KAFKA_TLS_CERT_FILE is required when TLS is enabled")
-	case keyFile == "":
-		return nil, errors.New("KAFKA_TLS_KEY_FILE is required when TLS is enabled")
-	}
-
-	clientCert, err := tls.LoadX509KeyPair(certFile, keyFile)
-	if err != nil {
-		return nil, fmt.Errorf("load client certificate: %w", err)
-	}
-
-	caPEM, err := os.ReadFile(caFile)
-	if err != nil {
-		return nil, fmt.Errorf("read CA file: %w", err)
-	}
-	caPool := x509.NewCertPool()
-	if ok := caPool.AppendCertsFromPEM(caPEM); !ok {
-		return nil, errors.New("failed to parse CA certificate")
-	}
-
-	return &tls.Config{
-		MinVersion:   tls.VersionTLS12,
-		RootCAs:      caPool,
-		Certificates: []tls.Certificate{clientCert},
-	}, nil
 }

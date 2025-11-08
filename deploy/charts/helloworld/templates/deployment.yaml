@@ -105,30 +105,13 @@ spec:
             - name: KAFKA_CLIENT_ID
               value: "{{ $kafka.clientId }}"
             {{- end }}
-            {{- if $kafka.tls.enabled }}
-            - name: KAFKA_TLS_ENABLED
-              value: "true"
-            - name: KAFKA_TLS_CA_FILE
-              value: "{{ printf "%s/%s" $kafka.tls.mountPath $kafka.tls.caFile }}"
-            - name: KAFKA_TLS_CERT_FILE
-              value: "{{ printf "%s/%s" $kafka.tls.mountPath $kafka.tls.certFile }}"
-            - name: KAFKA_TLS_KEY_FILE
-              value: "{{ printf "%s/%s" $kafka.tls.mountPath $kafka.tls.keyFile }}"
-            {{- end }}
             {{- end }}
           {{- end }}
-          {{- if or $dynamodb.serviceAccountTokenProjection.enabled $kafka.tls.enabled }}
+          {{- if $dynamodb.serviceAccountTokenProjection.enabled }}
           volumeMounts:
-            {{- if $dynamodb.serviceAccountTokenProjection.enabled }}
             - name: {{ $dynamodb.serviceAccountTokenProjection.volumeName }}
               mountPath: "{{ $dynamodb.serviceAccountTokenProjection.mountPath }}"
               readOnly: true
-            {{- end }}
-            {{- if $kafka.tls.enabled }}
-            - name: kafka-tls
-              mountPath: "{{ $kafka.tls.mountPath }}"
-              readOnly: true
-            {{- end }}
           {{- end }}
           ports:
             - name: http
@@ -161,9 +144,8 @@ spec:
       {{- end }}
       {{- $dynamodb := .Values.dynamodb }}
       {{- $kafka := .Values.kafka }}
-      {{- if or $dynamodb.serviceAccountTokenProjection.enabled $kafka.tls.enabled }}
+      {{- if $dynamodb.serviceAccountTokenProjection.enabled }}
       volumes:
-        {{- if $dynamodb.serviceAccountTokenProjection.enabled }}
         - name: {{ $dynamodb.serviceAccountTokenProjection.volumeName }}
           projected:
             sources:
@@ -171,10 +153,4 @@ spec:
                   path: "{{ $dynamodb.serviceAccountTokenProjection.tokenFile }}"
                   audience: "{{ $dynamodb.serviceAccountTokenProjection.audience }}"
                   expirationSeconds: {{ $dynamodb.serviceAccountTokenProjection.expirationSeconds }}
-        {{- end }}
-        {{- if $kafka.tls.enabled }}
-        - name: kafka-tls
-          secret:
-            secretName: {{ required "kafka.tls.secretName is required when kafka.tls.enabled=true" $kafka.tls.secretName }}
-        {{- end }}
       {{- end }}

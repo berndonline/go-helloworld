@@ -31,15 +31,6 @@ When Kafka settings are supplied the service emits every newly created content r
 
 If either brokers or topic are omitted the producer stays disabled and the API continues to operate normally.
 
-For Strimzi-managed clusters that require mutual TLS (mTLS), provide the PEM files emitted by the `KafkaUser` secret:
-
-- `KAFKA_TLS_ENABLED=true`
-- `KAFKA_TLS_CA_FILE` – path to the CA bundle (for Strimzi secrets: `<mount>/ca.crt`)
-- `KAFKA_TLS_CERT_FILE` – client certificate path (usually `<mount>/user.crt`)
-- `KAFKA_TLS_KEY_FILE` – client private key path (usually `<mount>/user.key`)
-
-The Helm chart exposes matching knobs under `kafka.*` and `kafka.tls.*` to mount the `KafkaUser` secret and set these environment variables automatically. See [`deploy/strimzi`](./deploy/strimzi) for an end-to-end example that creates the `KafkaTopic` and `KafkaUser` via Strimzi before installing the application chart. Because topic lifecycle is managed by Strimzi, the application expects the topic to exist ahead of time (auto-topic-creation is disabled).
-
 ## Architecture Overview
 
 ```mermaid
@@ -60,7 +51,7 @@ graph TD
     repo --> memory["In-memory default"]
 
     handlers --> kafka["Kafka publisher"]
-    kafka --> topic["Kafka topic (Strimzi)\nmTLS via KafkaUser secret"]
+    kafka --> topic["Kafka topic (external)"]
 
     subgraph Observability
         metrics
