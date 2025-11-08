@@ -1,0 +1,30 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaUser
+metadata:
+  name: helloworld
+  labels:
+    strimzi.io/cluster: my-cluster
+spec:
+  authentication:
+    type: tls
+  authorization:
+    type: simple
+    acls:
+      - resource:
+          type: topic
+          name: helloworld
+          patternType: literal
+        operation: Write
+        type: allow
+      - resource:
+          type: topic
+          name: helloworld
+          patternType: literal
+        operation: Describe
+        type: allow
+      - resource:
+          type: topic
+          name: helloworld
+          patternType: literal
+        operation: DescribeConfigs
+        type: allow

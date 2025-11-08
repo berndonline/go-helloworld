@@ -5,6 +5,7 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -19,6 +20,30 @@ func resetRepository() ContentRepository {
 	repo := newInMemoryRepository(nil)
 	setContentRepository(repo)
 	return repo
+}
+
+type mockPublisher struct {
+	mu     sync.Mutex
+	events []api
+}
+
+func (m *mockPublisher) Publish(_ context.Context, item api) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.events = append(m.events, item)
+	return nil
+}
+
+func (m *mockPublisher) Close() error {
+	return nil
+}
+
+func (m *mockPublisher) published() []api {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	cp := make([]api, len(m.events))
+	copy(cp, m.events)
+	return cp
 }
 
 func Test_getContentIndex(t *testing.T) {
@@ -230,6 +255,38 @@ func Test_CreateContent(t *testing.T) {
 				rr.Body.String(), expected)
 		}
 	})
+}
+
+func Test_CreateContentPublishesEvent(t *testing.T) {
+	resetRepository()
+	pub := &mockPublisher{}
+	setContentPublisher(pub)
+	defer resetContentPublisher()
+
+	r := mux.NewRouter()
+	r.HandleFunc("/api/v1/content", basicAuth(createContent)).Methods("POST")
+
+	reqBody := []byte(`{"id":"42","name":"Kafka Hello"}`)
+	req, err := http.NewRequest("POST", "/api/v1/content", bytes.NewBuffer(reqBody))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.SetBasicAuth(username, password)
+
+	rr := httptest.NewRecorder()
+	r.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusCreated {
+		t.Fatalf("unexpected status code: got %d want %d", rr.Code, http.StatusCreated)
+	}
+	events := pub.published()
+	if len(events) != 1 {
+		t.Fatalf("expected 1 published event, got %d", len(events))
+	}
+	if events[0].ID != "42" || events[0].Name != "Kafka Hello" {
+		t.Fatalf("unexpected payload published: %+v", events[0])
+	}
 }
 
 func Test_jwtChecks(t *testing.T) {

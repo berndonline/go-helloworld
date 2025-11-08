@@ -52,6 +52,19 @@ dynamodb:
     audience: sts.amazonaws.com
     expirationSeconds: 3600
 
+kafka:
+  enabled: false
+  topic: ""
+  brokers: []
+  clientId: ""
+  tls:
+    enabled: false
+    secretName: ""
+    mountPath: /var/run/secrets/kafka
+    caFile: ca.crt
+    certFile: user.crt
+    keyFile: user.key
+
 service:
   type: ClusterIP
   port: 80

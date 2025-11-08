@@ -71,7 +71,8 @@ spec:
           {{- end }}
           {{- $hasPodEnv := .Values.podEnv }}
           {{- $dynamodb := .Values.dynamodb }}
-          {{- if or $hasPodEnv $dynamodb.enabled }}
+          {{- $kafka := .Values.kafka }}
+          {{- if or $hasPodEnv $dynamodb.enabled $kafka.enabled }}
           env:
             {{- if $hasPodEnv }}
             {{- toYaml .Values.podEnv | nindent 12 }}
@@ -95,12 +96,39 @@ spec:
               value: "{{ printf "%s/%s" $dynamodb.serviceAccountTokenProjection.mountPath $dynamodb.serviceAccountTokenProjection.tokenFile }}"
             {{- end }}
             {{- end }}
+            {{- if $kafka.enabled }}
+            - name: KAFKA_BROKERS
+              value: "{{ join "," $kafka.brokers }}"
+            - name: KAFKA_TOPIC
+              value: "{{ $kafka.topic }}"
+            {{- if $kafka.clientId }}
+            - name: KAFKA_CLIENT_ID
+              value: "{{ $kafka.clientId }}"
+            {{- end }}
+            {{- if $kafka.tls.enabled }}
+            - name: KAFKA_TLS_ENABLED
+              value: "true"
+            - name: KAFKA_TLS_CA_FILE
+              value: "{{ printf "%s/%s" $kafka.tls.mountPath $kafka.tls.caFile }}"
+            - name: KAFKA_TLS_CERT_FILE
+              value: "{{ printf "%s/%s" $kafka.tls.mountPath $kafka.tls.certFile }}"
+            - name: KAFKA_TLS_KEY_FILE
+              value: "{{ printf "%s/%s" $kafka.tls.mountPath $kafka.tls.keyFile }}"
+            {{- end }}
+            {{- end }}
           {{- end }}
-          {{- if $dynamodb.serviceAccountTokenProjection.enabled }}
+          {{- if or $dynamodb.serviceAccountTokenProjection.enabled $kafka.tls.enabled }}
           volumeMounts:
+            {{- if $dynamodb.serviceAccountTokenProjection.enabled }}
             - name: {{ $dynamodb.serviceAccountTokenProjection.volumeName }}
               mountPath: "{{ $dynamodb.serviceAccountTokenProjection.mountPath }}"
               readOnly: true
+            {{- end }}
+            {{- if $kafka.tls.enabled }}
+            - name: kafka-tls
+              mountPath: "{{ $kafka.tls.mountPath }}"
+              readOnly: true
+            {{- end }}
           {{- end }}
           ports:
             - name: http
@@ -131,13 +159,22 @@ spec:
       tolerations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      {{- if .Values.dynamodb.serviceAccountTokenProjection.enabled }}
+      {{- $dynamodb := .Values.dynamodb }}
+      {{- $kafka := .Values.kafka }}
+      {{- if or $dynamodb.serviceAccountTokenProjection.enabled $kafka.tls.enabled }}
       volumes:
-        - name: {{ .Values.dynamodb.serviceAccountTokenProjection.volumeName }}
+        {{- if $dynamodb.serviceAccountTokenProjection.enabled }}
+        - name: {{ $dynamodb.serviceAccountTokenProjection.volumeName }}
           projected:
             sources:
               - serviceAccountToken:
-                  path: "{{ .Values.dynamodb.serviceAccountTokenProjection.tokenFile }}"
-                  audience: "{{ .Values.dynamodb.serviceAccountTokenProjection.audience }}"
-                  expirationSeconds: {{ .Values.dynamodb.serviceAccountTokenProjection.expirationSeconds }}
+                  path: "{{ $dynamodb.serviceAccountTokenProjection.tokenFile }}"
+                  audience: "{{ $dynamodb.serviceAccountTokenProjection.audience }}"
+                  expirationSeconds: {{ $dynamodb.serviceAccountTokenProjection.expirationSeconds }}
+        {{- end }}
+        {{- if $kafka.tls.enabled }}
+        - name: kafka-tls
+          secret:
+            secretName: {{ required "kafka.tls.secretName is required when kafka.tls.enabled=true" $kafka.tls.secretName }}
+        {{- end }}
       {{- end }}

@@ -94,6 +94,11 @@ func createContent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	log.Print("helloworld: createContent received a request - " + getIPAddress(r))
+	if created != nil {
+		if err := getContentPublisher().Publish(r.Context(), *created); err != nil {
+			log.Printf("helloworld: failed to publish content event: %v", err)
+		}
+	}
 	respondWithJson(w, http.StatusCreated, created)
 	defer childSpan.Finish()
 	defer span.Finish()
