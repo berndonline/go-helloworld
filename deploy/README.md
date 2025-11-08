@@ -102,8 +102,9 @@ helm upgrade --install helloworld . \
 - Kafka producer
   - `--set kafka.enabled=true`
   - `--set kafka.topic=content-created`
-  - `--set kafka.brokers[0]=broker-1.kafka:9092` (repeat index for multiple brokers)
+  - `--set kafka.brokers[0]=my-cluster-kafka-bootstrap.kafka:9092` (point at your Strimzi bootstrap service; repeat the index for additional brokers if needed)
   - Optional client identifier: `--set kafka.clientId=helloworld`
+  - Create the topic ahead of time (for Strimzi apply `deploy/strimzi/kafka-topic.yaml` in the Kafka namespace)
 
 - Resources and Security
   - Defaults are set in `values.yaml` (requests/limits)

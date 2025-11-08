@@ -29,7 +29,13 @@ When Kafka settings are supplied the service emits every newly created content r
 - `KAFKA_TOPIC` – destination topic to produce events to
 - `KAFKA_CLIENT_ID` *(optional)* – custom Kafka client identifier (defaults to the service name)
 
-If either brokers or topic are omitted the producer stays disabled and the API continues to operate normally.
+If either brokers or topic are omitted the producer stays disabled and the API continues to operate normally. The topic must already exist because the producer disables auto-topic creation. You can create it with Strimzi by applying [`deploy/strimzi/kafka-topic.yaml`](deploy/strimzi/kafka-topic.yaml) in the namespace that hosts your Strimzi cluster:
+
+```bash
+kubectl apply -f deploy/strimzi/kafka-topic.yaml -n kafka
+```
+
+When deploying via Helm, point `kafka.brokers` to your bootstrap service (for example `my-cluster-kafka-bootstrap.kafka:9092`) and set `kafka.topic=helloworld` to match the manifest above.
 
 ## Architecture Overview
 
