@@ -23,38 +23,22 @@ helm upgrade --install helloworld . \
 
 ### Examples
 
-Regex path (NGINX Ingress) example
+Expose via Envoy Gateway (Gateway API HTTPRoute):
 
 ```bash
 cd deploy/charts/helloworld
 helm upgrade --install helloworld . \
   --namespace helloworld \
   --create-namespace \
-  --set ingress.enabled=true \
-  --set ingress.className=nginx \
-  --set ingress.hosts[0].host=my.example.com \
-  --set ingress.hosts[0].paths[0].path='/helloworld(/|$)(.*)' \
-  --set ingress.hosts[0].paths[0].pathType=ImplementationSpecific \
+  --set httpRoute.enabled=true \
+  --set httpRoute.parentRefs[0].name=eg \
+  --set httpRoute.parentRefs[0].namespace=envoy-gateway-system \
+  --set httpRoute.hostnames[0]=my.example.com \
   --set image.repository=ghcr.io/berndonline/k8s/go-helloworld \
   --set image.tag="latest"
 ```
 
-Prefix path (no regex) example
-
-```bash
-cd deploy/charts/helloworld
-helm upgrade --install helloworld . \
-  --namespace helloworld \
-  --create-namespace \
-  --set ingress.enabled=true \
-  --set ingress.className=nginx \
-  --set ingress.annotations."nginx\.ingress\.kubernetes\.io/rewrite-target"="/" \
-  --set ingress.hosts[0].host=my.example.com \
-  --set ingress.hosts[0].paths[0].path=/helloworld \
-  --set ingress.hosts[0].paths[0].pathType=Prefix \
-  --set image.repository=ghcr.io/berndonline/k8s/go-helloworld \
-  --set image.tag="latest"
-```
+This assumes an Envoy Gateway instance listening on the `GatewayClass`/`Gateway` referenced by `parentRefs`. Update `hostnames` and `matches` as needed for your cluster.
 
 ### Options
 
@@ -63,14 +47,13 @@ helm upgrade --install helloworld . \
   - `--set image.tag=...` (leave empty to use chart `appVersion`)
   - `--set image.pullPolicy=IfNotPresent`
 
-- Ingress
-  - `--set ingress.enabled=true`
-  - `--set ingress.hosts[0].host=my.example.com`
-  - `--set ingress.hosts[0].paths[0].path=/helloworld(/|$)(.*)`
-  - `--set ingress.hosts[0].paths[0].pathType=ImplementationSpecific` (defaults; use `Prefix` for non-regex)
-  - `--set ingress.className=nginx`
-  - Regex matching is enabled by default (`nginx.ingress.kubernetes.io/use-regex: "true"`)
-  - For non-regex prefix matching, override rewrite target: `--set ingress.annotations."nginx\.ingress\.kubernetes\.io/rewrite-target"="/"`
+- Gateway API / HTTPRoute
+  - `--set httpRoute.enabled=true`
+  - `--set httpRoute.parentRefs[0].name=eg`
+  - `--set httpRoute.parentRefs[0].namespace=envoy-gateway-system`
+  - `--set httpRoute.hostnames[0]=my.example.com`
+  - Override `httpRoute.matches` for custom path matching (defaults to `PathPrefix /`).
+  - Supply an entire array of rule definitions via `httpRoute.rules` if you need custom filters/backends.
 
 - Metrics (Prometheus Operator / kube-prometheus-stack)
   - `--set metrics.enabled=true`

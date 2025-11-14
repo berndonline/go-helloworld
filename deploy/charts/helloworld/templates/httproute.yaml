@@ -1,0 +1,42 @@
+{{- if and .Values.httpRoute.enabled (not .Values.httpRoute.parentRefs) -}}
+{{- fail "httpRoute.parentRefs must contain at least one entry when enabling HTTPRoute" -}}
+{{- end -}}
+{{- if .Values.httpRoute.enabled -}}
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ include "helloworld.fullname" . }}
+  labels:
+    {{- include "helloworld.labels" . | nindent 4 }}
+spec:
+  {{- if .Values.httpRoute.parentRefs }}
+  parentRefs:
+    {{- toYaml .Values.httpRoute.parentRefs | nindent 4 }}
+  {{- end }}
+  {{- if .Values.httpRoute.hostnames }}
+  hostnames:
+    {{- range .Values.httpRoute.hostnames }}
+    - {{ . | quote }}
+    {{- end }}
+  {{- end }}
+  rules:
+  {{- if .Values.httpRoute.rules }}
+    {{- toYaml .Values.httpRoute.rules | nindent 4 }}
+  {{- else }}
+    - matches:
+        {{- if .Values.httpRoute.matches }}
+        {{- toYaml .Values.httpRoute.matches | nindent 8 }}
+        {{- else }}
+        - path:
+            type: PathPrefix
+            value: /
+        {{- end }}
+      backendRefs:
+        - name: {{ include "helloworld.fullname" . }}
+          port: {{ .Values.service.port }}
+      {{- if .Values.httpRoute.filters }}
+      filters:
+        {{- toYaml .Values.httpRoute.filters | nindent 8 }}
+      {{- end }}
+  {{- end }}
+{{- end }}
