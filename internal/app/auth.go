@@ -85,11 +85,7 @@ func jwtLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:    "token",
-		Value:   tokenString,
-		Expires: expirationTime,
-	})
+	http.SetCookie(w, buildSessionCookie(r, tokenString, expirationTime))
 	log.Print("helloworld: " + creds.Username + " login successfully - " + getIPAddress(r))
 	w.Write([]byte("Token issued.\n"))
 }
@@ -157,18 +153,36 @@ func jwtRefresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		Name:    "token",
-		Value:   tokenString,
-		Expires: expirationTime,
-	})
+	http.SetCookie(w, buildSessionCookie(r, tokenString, expirationTime))
 	w.Write([]byte("Token renewed.\n"))
 }
 
 func jwtLogout(w http.ResponseWriter, r *http.Request) {
-	http.SetCookie(w, &http.Cookie{
-		Name:   "token",
-		MaxAge: -1,
-	})
+	http.SetCookie(w, buildExpiredSessionCookie(r))
 	w.Write([]byte("Logged out!\n"))
+}
+
+func buildSessionCookie(r *http.Request, value string, expires time.Time) *http.Cookie {
+	return &http.Cookie{
+		Name:     "token",
+		Value:    value,
+		Expires:  expires,
+		Path:     "/",
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
+}
+
+func buildExpiredSessionCookie(r *http.Request) *http.Cookie {
+	return &http.Cookie{
+		Name:     "token",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		Expires:  time.Unix(0, 0),
+		HttpOnly: true,
+		Secure:   true,
+		SameSite: http.SameSiteLaxMode,
+	}
 }
