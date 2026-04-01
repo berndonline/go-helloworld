@@ -62,7 +62,7 @@ spec:
             {{- toYaml . | nindent 10 }}
           {{- end }}
         {{- end }}
-        - name: {{ .Chart.Name }}
+        - name: {{ include "helloworld.name" . }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           {{- with .Values.containerSecurityContext }}

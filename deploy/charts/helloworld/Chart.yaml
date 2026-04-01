@@ -1,6 +1,6 @@
 apiVersion: v2
-name: helloworld
+name: go-helloworld-chart
 description: Helloworld Helm chart for Kubernetes
 type: application
-version: 0.0.1
+version: 0.0.2
 appVersion: "0.0.1"
